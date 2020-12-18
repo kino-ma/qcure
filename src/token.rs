@@ -1,17 +1,34 @@
 #[derive(Debug)]
-pub struct Code();
+pub struct Code<'a> {
+    tokens: Vec<Token<'a>>
+}
 
-#[derive(Debug)]
-pub struct Token();
+#[derive(Debug, PartialEq)]
+pub struct Token<'a> {
+    t: &'a str
+}
 
 type Result<T> = std::result::Result<T, TokenizeError>;
 
 #[derive(Debug)]
 pub enum TokenizeError {}
 
-impl Code {
-    pub fn from(code: &str) -> Result<Self> {
-        return Ok(Self());
+impl<'a> Code<'_> {
+    pub fn from(code: &'a str) -> Result<Self> {
+        let tokens = Vec::new();
+        let res = Self {
+            tokens
+        };
+
+        Ok(res)
+    }
+}
+
+impl<'a> Token<'a> {
+    pub fn from(t: &'a str) -> Self {
+        Self {
+            t
+        }
     }
 }
 
@@ -29,6 +46,21 @@ impl std::error::Error for TokenizeError {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn new_token() {
+        let expect = Token { t: "hoge" };
+        let actual = Token::from("hoge");
+        assert_eq!(expect, actual);
+
+        let expect = Token { t: &"aaa 123"[0..=2] };
+        let actual = Token::from("aaa");
+        assert_eq!(expect, actual);
+
+        let expect = Token { t: "123" };
+        let actual = Token::from("123");
+        assert_eq!(expect, actual);
+    }
 
     #[test]
     fn tokenize_code() -> Result<()> {
