@@ -73,13 +73,18 @@ impl<'a> Token<'a> {
         Self::from_chrs(&chrs, idx)
     }
 
-    pub fn identifier(mut chrs: std::str::Chars<'a>) -> Option<Self> {
+    pub fn identifier(chrs: std::str::Chars<'a>) -> Option<Self> {
         let mut idx: usize = 0;
 
-        for c in chrs.next() {
-            if !c.is_alphanumeric() && c != '\'' {
+        for c in chrs.clone() {
+            if idx == 0 && (c.is_ascii_digit() || c.is_ascii_uppercase()) {
                 break;
             }
+
+            if !c.is_ascii_alphanumeric() && c != '\'' {
+                break;
+            }
+
             idx += 1;
         }
 
