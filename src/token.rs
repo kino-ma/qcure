@@ -77,7 +77,7 @@ impl<'a> Token<'a> {
         let mut idx: usize = 0;
 
         for c in chrs.clone() {
-            if idx == 0 && (c.is_ascii_digit() || c.is_ascii_uppercase()) {
+            if idx == 0 && c.is_ascii_digit() {
                 break;
             }
 
@@ -152,12 +152,12 @@ mod tests {
         let actual = Token::identifier("hoge123 hoge".chars()).unwrap();
         assert_eq!(expect, actual);
 
-        let expect = None;
-        let actual = Token::identifier("123".chars());
+        let expect = Token::new("Hoge");
+        let actual = Token::identifier("Hoge".chars()).unwrap();
         assert_eq!(expect, actual);
 
         let expect = None;
-        let actual = Token::identifier("Hoge".chars());
+        let actual = Token::identifier("123hoge".chars());
         assert_eq!(expect, actual);
     }
 
