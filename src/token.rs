@@ -13,9 +13,27 @@ type Result<T> = std::result::Result<T, TokenizeError>;
 #[derive(Debug)]
 pub enum TokenizeError {}
 
-impl<'a> Code<'_> {
+impl<'a> Code<'a> {
     pub fn from(code: &'a str) -> Result<Self> {
-        let tokens = Vec::new();
+        let chrs = code.chars();
+        let mut tokens = Vec::new();
+
+        for c in chrs.clone() {
+            match true {
+                _ if c.is_ascii_digit() => {
+                    let t = Token::numeric(chrs.clone());
+                    tokens.push(t);
+                }
+
+                _ if c.is_ascii_lowercase() => {
+                    let t = Token::identifier(chrs.clone());
+                    tokens.push(t);
+                }
+
+                _ => {}
+            }
+        }
+
         let res = Self {
             tokens
         };
@@ -29,6 +47,34 @@ impl<'a> Token<'a> {
         Self {
             t
         }
+    }
+
+    pub fn numeric(mut chrs: std::str::Chars<'a>) -> Self {
+        let mut idx: usize = 0;
+
+        for c in chrs.next() {
+            idx += 1;
+            if !c.is_ascii_digit() {
+                break;
+            }
+        }
+        let s = &chrs.as_str()[..idx];
+
+        Self::from(s)
+    }
+
+    pub fn identifier(mut chrs: std::str::Chars<'a>) -> Self {
+        let mut idx: usize = 0;
+
+        for c in chrs.next() {
+            idx += 1;
+            if !c.is_alphanumeric() && c != '\'' {
+                break;
+            }
+        }
+        let s = &chrs.as_str()[..idx];
+
+        Self::from(s)
     }
 }
 
