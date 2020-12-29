@@ -60,6 +60,19 @@ impl<'a> Token<'a> {
         }
     }
 
+    pub fn whitespace(chrs: std::str::Chars<'a>) -> Option<Self> {
+        let mut idx: usize = 0;
+
+        for c in chrs.clone() {
+            if !c.is_ascii_whitespace() {
+                break;
+            }
+            idx += 1;
+        }
+
+        Self::from_chrs(&chrs, idx)
+    }
+
     pub fn numeric(chrs: std::str::Chars<'a>) -> Option<Self> {
         let mut idx: usize = 0;
 
