@@ -15,23 +15,12 @@ pub enum TokenizeError {}
 
 impl<'a> Code<'a> {
     pub fn from(code: &'a str) -> Result<Self> {
-        let chrs = code.chars();
+        let mut chrs = code.chars();
         let mut tokens = Vec::new();
 
-        for c in chrs.clone() {
-            match true {
-                _ if c.is_ascii_digit() => {
-                    let t = Token::numeric(chrs.clone());
-                    tokens.push(t);
-                }
-
-                _ if c.is_ascii_lowercase() => {
-                    let t = Token::identifier(chrs.clone());
-                    tokens.push(t);
-                }
-
-                _ => {}
-            }
+        while let Some(_) = chrs.next() {
+            let t = Token::from(chrs.clone());
+            tokens.push(t);
         }
 
         let res = Self {
@@ -43,13 +32,28 @@ impl<'a> Code<'a> {
 }
 
 impl<'a> Token<'a> {
-    pub fn from(t: &'a str) -> Self {
+    pub fn new(t: &'a str) -> Self {
         Self {
             t
         }
     }
 
-    pub fn numeric(mut chrs: std::str::Chars<'a>) -> Self {
+    pub fn from(chrs: std::str::Chars<'a>) -> Self {
+        Self::numeric(chrs.clone())
+            .or(Self::identifier(chrs.clone()))
+            .unwrap_or(Self::empty())
+    }
+
+    pub fn from_chrs(chrs: std::str::Chars<'a>, last: usize) -> Option<Self> {
+        if last == 0 {
+            None
+        } else {
+            let s = &chrs.as_str()[..last];
+            Some(Self::new(s))
+        }
+    }
+
+    pub fn numeric(mut chrs: std::str::Chars<'a>) -> Option<Self> {
         let mut idx: usize = 0;
 
         for c in chrs.next() {
@@ -58,12 +62,11 @@ impl<'a> Token<'a> {
                 break;
             }
         }
-        let s = &chrs.as_str()[..idx];
 
-        Self::from(s)
+        Self::from_chrs(chrs, idx)
     }
 
-    pub fn identifier(mut chrs: std::str::Chars<'a>) -> Self {
+    pub fn identifier(mut chrs: std::str::Chars<'a>) -> Option<Self> {
         let mut idx: usize = 0;
 
         for c in chrs.next() {
@@ -72,9 +75,12 @@ impl<'a> Token<'a> {
                 break;
             }
         }
-        let s = &chrs.as_str()[..idx];
 
-        Self::from(s)
+        Self::from_chrs(chrs, idx)
+    }
+
+    pub fn empty() -> Self {
+        Self::new("")
     }
 }
 
@@ -96,15 +102,16 @@ mod tests {
     #[test]
     fn new_token() {
         let expect = Token { t: "hoge" };
-        let actual = Token::from("hoge");
+        let actual = Token::new("hoge");
+        println!("{:?}", actual);
         assert_eq!(expect, actual);
 
         let expect = Token { t: &"aaa 123"[0..=2] };
-        let actual = Token::from("aaa");
+        let actual = Token::new("aaa");
         assert_eq!(expect, actual);
 
         let expect = Token { t: "123" };
-        let actual = Token::from("123");
+        let actual = Token::new("123");
         assert_eq!(expect, actual);
     }
 
