@@ -142,6 +142,21 @@ mod tests {
     }
 
     #[test]
+    fn tokenize_identifier() {
+        let expect = Token::new("hoge123");
+        let actual = Token::identifier("hoge123 hoge".chars()).unwrap();
+        assert_eq!(expect, actual);
+
+        let expect = None;
+        let actual = Token::identifier("123".chars());
+        assert_eq!(expect, actual);
+
+        let expect = None;
+        let actual = Token::identifier("Hoge".chars());
+        assert_eq!(expect, actual);
+    }
+
+    #[test]
     fn tokenize_code() -> Result<()> {
         let code = "";
         Code::from(code)?;
