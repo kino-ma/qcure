@@ -3,7 +3,7 @@ pub struct Code<'a> {
     tokens: Vec<Token<'a>>
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Token<'a> {
     t: &'a str
 }
@@ -18,9 +18,13 @@ impl<'a> Code<'a> {
         let mut chrs = code.chars();
         let mut tokens = Vec::new();
 
-        while let Some(_) = chrs.next() {
-            let t = Token::from(chrs.clone());
-            tokens.push(t);
+        loop {
+            let t = Token::from(&mut chrs);
+            tokens.push(t.clone());
+
+            if t.is_empty() {
+                break
+            }
         }
 
         let res = Self {
@@ -38,17 +42,20 @@ impl<'a> Token<'a> {
         }
     }
 
-    pub fn from(chrs: std::str::Chars<'a>) -> Self {
-        Self::numeric(chrs.clone())
+    pub fn from(chrs: &mut std::str::Chars<'a>) -> Self {
+        let t = Self::numeric(chrs.clone())
             .or(Self::identifier(chrs.clone()))
-            .unwrap_or(Self::empty())
+            .unwrap_or(Self::empty());
+        let _ = chrs.skip(t.len());
+
+        t
     }
 
-    pub fn from_chrs(chrs: std::str::Chars<'a>, last: usize) -> Option<Self> {
+    pub fn from_chrs(chrs: &std::str::Chars<'a>, last: usize) -> Option<Self> {
         if last == 0 {
             None
         } else {
-            let s = &chrs.as_str()[..last];
+            let s: &str = &chrs.as_str()[..=last];
             Some(Self::new(s))
         }
     }
@@ -63,24 +70,32 @@ impl<'a> Token<'a> {
             }
         }
 
-        Self::from_chrs(chrs, idx)
+        Self::from_chrs(&chrs, idx)
     }
 
     pub fn identifier(mut chrs: std::str::Chars<'a>) -> Option<Self> {
         let mut idx: usize = 0;
 
         for c in chrs.next() {
-            idx += 1;
             if !c.is_alphanumeric() && c != '\'' {
                 break;
             }
+            idx += 1;
         }
 
-        Self::from_chrs(chrs, idx)
+        Self::from_chrs(&chrs, idx)
     }
 
     pub fn empty() -> Self {
         Self::new("")
+    }
+
+    pub fn len(&self) -> usize {
+        return self.t.len();
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.t == ""
     }
 }
 
@@ -117,7 +132,7 @@ mod tests {
 
     #[test]
     fn tokenize_numeric() {
-        let expect = Token { t : "123" };
+        let expect = Token::new("123");
         let actual = Token::numeric("123 hoge".chars()).unwrap();
         assert_eq!(expect, actual);
 
