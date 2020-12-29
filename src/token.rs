@@ -55,19 +55,19 @@ impl<'a> Token<'a> {
         if last == 0 {
             None
         } else {
-            let s: &str = &chrs.as_str()[..=last];
+            let s: &str = &chrs.as_str()[..last];
             Some(Self::new(s))
         }
     }
 
-    pub fn numeric(mut chrs: std::str::Chars<'a>) -> Option<Self> {
+    pub fn numeric(chrs: std::str::Chars<'a>) -> Option<Self> {
         let mut idx: usize = 0;
 
-        for c in chrs.next() {
-            idx += 1;
+        for c in chrs.clone() {
             if !c.is_ascii_digit() {
                 break;
             }
+            idx += 1;
         }
 
         Self::from_chrs(&chrs, idx)
@@ -136,8 +136,8 @@ mod tests {
         let actual = Token::numeric("123 hoge".chars()).unwrap();
         assert_eq!(expect, actual);
 
-        let expect = Token { t : "" };
-        let actual = Token::numeric("hoge".chars()).unwrap();
+        let expect = None;
+        let actual = Token::numeric("hoge".chars());
         assert_eq!(expect, actual);
     }
 
