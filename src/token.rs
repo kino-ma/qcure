@@ -150,6 +150,17 @@ mod tests {
     }
 
     #[test]
+    fn tokenize_whitespace() {
+        let expect = Token::new("  \thoge");
+        let actual = Token::whitespace("  \t".chars()).unwrap();
+        assert_eq!(expect, actual);
+
+        let expect = None;
+        let actual = Token::whitespace("hoge".chars());
+        assert_eq!(expect, actual);
+    }
+
+    #[test]
     fn tokenize_numeric() {
         let expect = Token::new("123");
         let actual = Token::numeric("123 hoge".chars()).unwrap();
