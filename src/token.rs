@@ -164,8 +164,8 @@ mod tests {
 
     #[test]
     fn tokenize_whitespace() {
-        let expect = Token::new("  \thoge");
-        let actual = Token::whitespace("  \t".chars()).unwrap();
+        let expect = Token::new("  \t");
+        let actual = Token::whitespace("  \thoge".chars()).unwrap();
         assert_eq!(expect, actual);
 
         let expect = None;
