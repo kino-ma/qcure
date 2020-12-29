@@ -91,6 +91,20 @@ impl<'a> Token<'a> {
         Self::from_chrs(&chrs, idx)
     }
 
+    pub fn symbol(chrs: std::str::Chars<'a>) -> Option<Self> {
+        let mut idx: usize = 0;
+
+        for c in chrs.clone() {
+            if !r#"!?@#$%^&*/\|;:+-=~'"`()[]{}"#.contains(c) {
+                break;
+            }
+
+            idx += 1;
+        }
+
+        Self::from_chrs(&chrs, idx)
+    }
+
     pub fn empty() -> Self {
         Self::new("")
     }
@@ -164,11 +178,11 @@ mod tests {
     #[test]
     fn tokenize_symbol() {
         let expect = Token::new(":=");
-        let actual = Token::identifier(":= hoge".chars()).unwrap();
+        let actual = Token::symbol(":= hoge".chars()).unwrap();
         assert_eq!(expect, actual);
 
         let expect = None;
-        let actual = Token::identifier("hoge123".chars());
+        let actual = Token::symbol("hoge123".chars());
         assert_eq!(expect, actual);
     }
 
