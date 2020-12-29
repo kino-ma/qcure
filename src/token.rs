@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Code<'a> {
     tokens: Vec<Token<'a>>
 }
@@ -219,7 +219,7 @@ mod tests {
         let tokens = arr.iter().map(|s| Token::new(s)).collect();
         let expect = Code { tokens };
 
-        let actual = Code::from(code);
+        let actual = Code::from(code).unwrap();
         
         assert_eq!(expect, actual);
     }
