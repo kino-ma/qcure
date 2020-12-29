@@ -211,10 +211,16 @@ mod tests {
     }
 
     #[test]
-    fn tokenize_code() -> Result<()> {
-        let code = "";
-        Code::from(code)?;
+    fn tokenize_code() {
+        let code = r#"hoge fuga
+        123piyo  a"#;
 
-        Ok(())
+        let arr = ["hoge", " ", "fuga", "\n        ", "123", "piyo", "  ", "a"];
+        let tokens = arr.iter().map(|s| Token::new(s)).collect();
+        let expect = Code { tokens };
+
+        let actual = Code::from(code);
+        
+        assert_eq!(expect, actual);
     }
 }
