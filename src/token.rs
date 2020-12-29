@@ -43,7 +43,8 @@ impl<'a> Token<'a> {
     }
 
     pub fn from(chrs: &mut std::str::Chars<'a>) -> Self {
-        let t = Self::numeric(chrs.clone())
+        let t = Self::whitespace(chrs.clone())
+            .or(Self::numeric(chrs.clone()))
             .or(Self::identifier(chrs.clone()))
             .unwrap_or(Self::empty());
         let _ = chrs.skip(t.len());
