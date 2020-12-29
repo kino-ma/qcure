@@ -116,6 +116,17 @@ mod tests {
     }
 
     #[test]
+    fn tokenize_numeric() {
+        let expect = Token { t : "123" };
+        let actual = Token::numeric("123 hoge".chars()).unwrap();
+        assert_eq!(expect, actual);
+
+        let expect = Token { t : "" };
+        let actual = Token::numeric("hoge".chars()).unwrap();
+        assert_eq!(expect, actual);
+    }
+
+    #[test]
     fn tokenize_code() -> Result<()> {
         let code = "";
         Code::from(code)?;
