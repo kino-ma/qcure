@@ -276,7 +276,7 @@ mod tests {
 
         let code = Code { tokens };
         let iter = code.iter();
-        let actual: Vec<Token> = iter.collect();
+        let actual: Vec<Token> = iter.map(|t| t.clone()).collect();
 
         assert_eq!(expect, actual);
     }
