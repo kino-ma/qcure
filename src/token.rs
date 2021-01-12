@@ -1,6 +1,6 @@
 #[derive(Debug, PartialEq)]
 pub struct Code {
-    tokens: Vec<Token>
+    pub tokens: Vec<Token>
 }
 
 #[derive(Debug, PartialEq, Clone)]

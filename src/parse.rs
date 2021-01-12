@@ -8,7 +8,7 @@ type Tree = Box<Node>;
 
 pub struct Node {
     //kind: Kind,
-    token: Token,
+    children: Vec<Token>,
 }
 
 pub enum Kind {
@@ -44,9 +44,9 @@ impl std::error::Error for ParseError {}
 
 impl Program {
     pub fn new(code: Code) -> Result<Self> {
-        let (token, _) = Token::empty();
-        let n = Node { token };
-        let ptree = Box::new(n);
+        let children = code.tokens;
+        let node = Node { children };
+        let ptree = Box::new(node);
         Ok(Self { ptree })
     }
 }
