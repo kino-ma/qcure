@@ -233,7 +233,7 @@ mod tests {
         let code = r#"hoge fuga
         123piyo  a"#;
 
-        let arr = [("hoge", Identifier), (" ", Identifier), ("fuga", Identifier), ("\n        ", Identifier), ("123", Identifier), ("piyo", Identifier), ("  ", Identifier), ("a", Identifier)];
+        let arr = [("hoge", Identifier), (" ", WhiteSpace), ("fuga", Identifier), ("\n        ", WhiteSpace), ("123", Numeric), ("piyo", Identifier), ("  ", WhiteSpace), ("a", Identifier)];
         let tokens = arr.iter().map(|(s, k)| Token::new(s.to_string(), k.clone())).collect();
         let expect = Code { tokens };
 
