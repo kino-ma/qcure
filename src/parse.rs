@@ -1,4 +1,4 @@
-use crate::token::{Token, TokenKind::*};
+use crate::token::{Code, Token, TokenKind::*};
 
 pub struct Program {
     ptree: Tree
@@ -20,4 +20,17 @@ pub enum Kind {
     Parenthesis,
     Bracket,
     Brace,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn new_program() {
+        let code = r#"hoge fuga
+        123piyo  a"#;
+        let code = Code::from(code);
+        Program::new(code).expect("failed to parse");
+    }
 }
