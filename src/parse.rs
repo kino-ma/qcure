@@ -7,12 +7,18 @@ pub struct Program {
 
 impl Program {
     pub fn new(code: Code) -> Result<Self> {
-        let children = code.tokens;
-        let kind = Kind::Empty;
-        let (token, _) = Token::empty();
-        let tree = Tree::Leaf(token);
-        let ptree = PTree { kind, tree };
-        Ok(Self { ptree })
+        let tokens = code.tokens;
+        let mut iter = tokens.iter();
+        let mut stmts = Vec::new();
+
+        // loop
+        {
+            let stmt = Statement::new(&mut iter);
+            stmts.push(stmt);
+        }
+
+        let program = Self { stmts };
+        Ok(program)
     }
 }
 
