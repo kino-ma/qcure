@@ -77,12 +77,16 @@ mod tests {
     }
 
     #[test]
-    fn new_ptree() {
-        let kind = Kind::Empty;
-        let (token, _) = Token::empty();
-        let tree = Tree::Leaf(token);
-        let expect = PTree { kind, tree };
+    fn new_statement() {
+        use Value::*;
+        use LiteralValue::*;
+        let src = "hoge := 1";
+        let code = Code::from(src).expect("failed to tokenize");
 
-        let actual = PTree::new(kind, tree)
+        let mut iter = code.iter();
+        let mut stmts = Vec::new();
+
+        let expect = Statement::Assign { prefix: None, ident: "hoge".to_string(), expr: vec![Literal(NumericLiteral(1))]};
+        let actual = Statement::new(&mut iter);
     }
 }
