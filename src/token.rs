@@ -148,6 +148,10 @@ impl Token {
         return self.t.len();
     }
 
+    pub fn is(&self, s: &str) -> bool {
+        self.t == s
+    }
+
     pub fn is_empty(&self) -> bool {
         self.t == ""
     }
