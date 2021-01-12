@@ -1,14 +1,28 @@
 use crate::token::{Code, Token, TokenKind::*};
 
 pub struct Program {
-    ptree: Tree
+    ptree: PTree
 }
 
-type Tree = Box<Node>;
+impl Program {
+    pub fn new(code: Code) -> Result<Self> {
+        let children = code.tokens;
+        let kind = Kind::Empty;
+        let (token, _) = Token::empty();
+        let tree = Tree::Leaf(token);
+        let ptree = PTree { kind, tree };
+        Ok(Self { ptree })
+    }
+}
 
-pub struct Node {
-    //kind: Kind,
-    children: Vec<Token>,
+pub struct PTree {
+    kind: Kind,
+    tree: Tree,
+}
+
+pub enum Tree {
+    Node(Vec<PTree>),
+    Leaf(Token),
 }
 
 pub enum Kind {
@@ -20,6 +34,7 @@ pub enum Kind {
     Parenthesis,
     Bracket,
     Brace,
+    Empty,
 }
 
 type Result<T> = std::result::Result<T, ParseError>;
@@ -42,15 +57,6 @@ impl std::fmt::Display for ParseError {
 
 impl std::error::Error for ParseError {}
 
-impl Program {
-    pub fn new(code: Code) -> Result<Self> {
-        let children = code.tokens;
-        let node = Node { children };
-        let ptree = Box::new(node);
-        Ok(Self { ptree })
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -61,5 +67,10 @@ mod tests {
         123piyo  a"#;
         let code = Code::from(code).expect("failed to tokenize");
         Program::new(code).expect("failed to parse");
+    }
+
+    #[test]
+    fn new_node() {
+        let 
     }
 }
