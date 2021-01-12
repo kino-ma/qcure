@@ -26,7 +26,8 @@ type Result<T> = std::result::Result<T, ParseError>;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum ParseError {
-
+    InvalidToken(Token, Token),
+    Other
 }
 
 impl Program {
