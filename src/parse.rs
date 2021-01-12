@@ -1,7 +1,8 @@
+use std::collections::HashMap;
 use crate::token::{Code, Token, TokenKind::*};
 
 pub struct Program {
-    ptree: PTree
+    stmts: Vec<Statement>,
 }
 
 impl Program {
@@ -15,26 +16,26 @@ impl Program {
     }
 }
 
-pub struct PTree {
-    kind: Kind,
-    tree: Tree,
+pub enum Statement {
+    Assign { prefix: Option<AssignPrefix>, ident: String, expr: Vec<Value> },
 }
 
-pub enum Tree {
-    Node(Vec<PTree>),
-    Leaf(Token),
+pub enum AssignPrefix {
+
 }
 
-pub enum Kind {
-    Keyword,
-    Identifier,
-    TypeIdentifier,
-    BinaryOperator,
-    UnaryOperator,
-    Parenthesis,
-    Bracket,
-    Brace,
-    Empty,
+pub enum Value {
+    Identifier(String),
+    Literal(LiteralValue),
+}
+
+pub enum LiteralValue {
+    NumericLiteral(i64),
+    CharLiteral(char),
+    StringLiteral(String),
+    BoolLiteral(bool),
+    StructLiteral { name: String, fields: HashMap<String, LiteralValue> },
+    EnumLiteral { name: String, variant: String, fields: HashMap<String, LiteralValue> },
 }
 
 type Result<T> = std::result::Result<T, ParseError>;
@@ -70,7 +71,12 @@ mod tests {
     }
 
     #[test]
-    fn new_node() {
-        let 
+    fn new_ptree() {
+        let kind = Kind::Empty;
+        let (token, _) = Token::empty();
+        let tree = Tree::Leaf(token);
+        let expect = PTree { kind, tree };
+
+        let actual = PTree::new(kind, tree)
     }
 }
