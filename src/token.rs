@@ -5,8 +5,8 @@ pub struct Code {
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Token {
-    t: String,
-    k: TokenKind,
+    pub t: String,
+    pub k: TokenKind,
 }
 
 #[derive(Debug, PartialEq, Clone)]
