@@ -241,4 +241,21 @@ mod tests {
         
         assert_eq!(expect, actual);
     }
+
+    #[test]
+    fn iter_tokens() {
+        let code = r#"hoge fuga
+        123piyo  a"#;
+
+        let arr = [("hoge", Identifier), (" ", WhiteSpace), ("fuga", Identifier), ("\n        ", WhiteSpace), ("123", Numeric), ("piyo", Identifier), ("  ", WhiteSpace), ("a", Identifier)];
+        let tokens: Vec<Token> = arr.iter().map(|(s, k)| Token::new(s.to_string(), k.clone())).collect();
+
+        let expect = tokens.clone();
+
+        let code = Code { tokens };
+        let iter = code.iter();
+        let actual: Vec<Token> = iter.collect();
+
+        assert_eq!(expect, actual);
+    }
 }
