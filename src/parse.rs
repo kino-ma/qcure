@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use crate::token::{Code, Token, TokenKind::*};
+use crate::token::{Code, Token, TokenKind::{self, *}, TokenIter};
 
 pub struct Program {
     stmts: Vec<Statement>,
@@ -7,13 +7,12 @@ pub struct Program {
 
 impl Program {
     pub fn new(code: Code) -> Result<Self> {
-        let tokens = code.tokens;
-        let mut iter = tokens.iter();
+        let mut iter = code.iter();
         let mut stmts = Vec::new();
 
         // loop
         {
-            let stmt = Statement::new(&mut iter);
+            let stmt = Statement::new(&mut iter)?;
             stmts.push(stmt);
         }
 
@@ -22,15 +21,83 @@ impl Program {
     }
 }
 
+fn expect<'a>(it: &mut std::slice::Iter<&'a Token>, kind: Option<TokenKind>, s: Option<&str>) -> Result<&'a Token> {
+    let t = it.next().ok_or(UnexpectedEOF)?;
+
+    if let Some(kind) = kind {
+        if t.k != kind {
+            return Err(UnexpectedToken(*t.clone()));
+        }
+    }
+    
+    if let Some(s) = s {
+        if !t.is(s) {
+            return Err(UnexpectedToken(*t.clone()));
+        }
+    }
+
+    Ok(t)
+}
+
 pub enum Statement {
-    Assign { prefix: Option<AssignPrefix>, ident: String, expr: Vec<Value> },
+    Assign { prefix: Option<AssignPrefix>, ident: String, expr: Expr },
+}
+
+impl Statement {
+    pub fn new(iter: &mut TokenIter) -> Result<Self> {
+        let mut tokens = Vec::new();
+
+        for t in iter {
+            if t.is(";") {
+                break;
+            }
+
+            tokens.push(t);
+        }
+
+        Self::assign(&tokens)
+            // .or(Self::definition(&tokens))
+            // .or(Self::type_assertion(&tokens))
+    }
+
+    pub fn assign(tokens: &Vec<&Token>) -> Result<Self> {
+        let mut it = tokens.iter();
+        let mut t;
+
+        let prefix;
+        let ident;
+        let expr;
+
+        t = expect(&mut it, Some(Identifier), None)?;
+
+        prefix = if t.is("public") || t.is("exported") {
+            t = expect(&mut it, Some(Identifier), None)?;
+            None
+        } else {
+            None
+        };
+
+        ident = t.t.clone();
+
+        expect(&mut it, Some(Symbol), Some(":="));
+
+        expr = Expr::new(it.collect());
+
+        Ok(Self::Assign{
+            prefix,
+            ident,
+            expr
+        })
+    }
 }
 
 pub enum AssignPrefix {
 
 }
 
-pub enum Value {
+pub struct Expr(Vec<Term>);
+
+pub enum Term {
     Identifier(String),
     Literal(LiteralValue),
 }
@@ -48,15 +115,17 @@ type Result<T> = std::result::Result<T, ParseError>;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum ParseError {
-    InvalidToken(Token, Token),
-    Other
+    UnexpectedToken(Token),
+    UnexpectedEOF,
 }
+use ParseError::*;
 
 impl std::fmt::Display for ParseError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         use ParseError::*;
         match self {
             InvalidToken(t1, t2) => write!(f, "invalid token: `{:?}` (appears after `{:?}`)", t1, t2),
+            UnexpectedEOF => write!(f, "unexpected EOF"),
             Other => write!(f, "some error"),
         }
     }
