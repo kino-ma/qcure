@@ -22,6 +22,22 @@ pub enum Kind {
     Brace,
 }
 
+type Result<T> = std::result::Result<T, ParseError>;
+
+#[derive(Debug, PartialEq, Clone)]
+pub enum ParseError {
+
+}
+
+impl Program {
+    pub fn new(code: Code) -> Result<Self> {
+        let (token, _) = Token::empty();
+        let n = Node { token };
+        let ptree = Box::new(n);
+        Ok(Self { ptree })
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -30,7 +46,7 @@ mod tests {
     fn new_program() {
         let code = r#"hoge fuga
         123piyo  a"#;
-        let code = Code::from(code);
+        let code = Code::from(code).expect("failed to tokenize");
         Program::new(code).expect("failed to parse");
     }
 }
