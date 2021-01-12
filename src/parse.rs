@@ -1,4 +1,4 @@
-use crate::token::Token;
+use crate::token::{Token, TokenKind::*};
 
 pub struct Program {
     ptree: Tree
@@ -7,10 +7,17 @@ pub struct Program {
 type Tree = Box<Node>;
 
 pub struct Node {
-    kind: Kind,
+    //kind: Kind,
     token: Token,
 }
 
 pub enum Kind {
-
+    Keyword,
+    Identifier,
+    TypeIdentifier,
+    BinaryOperator,
+    UnaryOperator,
+    Parenthesis,
+    Bracket,
+    Brace,
 }
