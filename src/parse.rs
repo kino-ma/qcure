@@ -30,6 +30,18 @@ pub enum ParseError {
     Other
 }
 
+impl std::fmt::Display for ParseError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        use ParseError::*;
+        match self {
+            InvalidToken(t1, t2) => write!(f, "invalid token: `{:?}` (appears after `{:?}`)", t1, t2),
+            Other => write!(f, "some error"),
+        }
+    }
+}
+
+impl std::error::Error for ParseError {}
+
 impl Program {
     pub fn new(code: Code) -> Result<Self> {
         let (token, _) = Token::empty();
