@@ -47,6 +47,10 @@ impl Code {
 
         Ok(res)
     }
+
+    pub fn iter(&self) -> TokenIter {
+        TokenIter::new(&self.tokens)
+    }
 }
 
 impl Token {
@@ -154,6 +158,24 @@ impl std::fmt::Display for TokenizeError {
         write!(f, "")
     }
 
+}
+
+pub struct TokenIter<'a> {
+    it: std::slice::Iter<'a, Token>
+}
+
+impl<'a> TokenIter<'a> {
+    pub fn new(tokens: &'a Vec<Token>) -> Self {
+        let it = tokens.iter();
+        Self { it }
+    }
+}
+
+impl<'a> Iterator for TokenIter<'a> {
+    type Item = &'a Token;
+    fn next(&mut self) -> Option<Self::Item> {
+        self.it.next()
+    }
 }
 
 impl std::error::Error for TokenizeError {
