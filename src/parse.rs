@@ -65,7 +65,9 @@ impl Statement {
     }
 
     pub fn assign(tokens: &Vec<&Token>) -> Result<Self> {
-        let mut it = tokens.iter().map(|t| *t);
+        let mut it = tokens.iter()
+            .filter(|t| t.k != TK::WhiteSpace)
+            .map(|t| t.clone());
         let mut t;
 
         let prefix;
