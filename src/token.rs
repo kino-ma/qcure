@@ -55,17 +55,6 @@ impl Code {
 
 pub type TokenIter<'a> = std::slice::Iter<'a, Token>;
 
-/*
-impl IntoIterator for Code {
-    type Item = &'a Token;
-    type IntoIter = TokenIter<'a>;
-    
-    fn into_iter(self) -> Self::IntoIter {
-        TokenIter::new(&self.tokens)
-    }
-}
-*/
-
 impl Token {
     pub fn new(t: String, k: TokenKind) -> Self {
         let t = t.to_string();
