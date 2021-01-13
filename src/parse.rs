@@ -158,7 +158,6 @@ impl std::fmt::Display for ParseError {
         match self {
             UnexpectedToken(t) => write!(f, "unexpected token: `{:?}`", t),
             UnexpectedEOF => write!(f, "unexpected EOF"),
-            Other => write!(f, "some error"),
         }
     }
 }
