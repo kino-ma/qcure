@@ -175,9 +175,10 @@ mod tests {
 
     #[test]
     fn new_program() {
-        let code = r#"hoge fuga
-        123piyo  a"#;
-        let code = Code::from(code).expect("failed to tokenize");
+        let expr_src = complex_expr_src();
+        let src = format!("hoge := {}", expr_src);
+
+        let code = Code::from(&src).expect("failed to tokenize");
         Program::new(code).expect("failed to parse");
     }
 
@@ -196,10 +197,21 @@ mod tests {
 
     #[test]
     fn new_complex_expr() {
-        let src = "f 1 + 2 * (-3 + 4)";
+        let src = complex_expr_src();
         let tokens = Code::from(src).expect("failed to tokenize").tokens;
 
-        let expect: Expr = Expr(vec![
+        let expect: Expr = complex_expr();
+
+        let actual = Expr::new(tokens.iter().collect());
+        assert_eq!(expect, actual);
+    }
+
+    fn complex_expr_src() -> &'static str {
+        "f 1 + 2 * (-3 + 4)"
+    }
+
+    fn complex_expr() -> Expr {
+        Expr(vec![
             Literal(NumericLiteral(1)),
             Identifier("f".to_string()),
             Literal(NumericLiteral(2)),
@@ -209,9 +221,6 @@ mod tests {
             Identifier("+".to_string()),
             Identifier("*".to_string()),
             Identifier("+".to_string()),
-        ]);
-
-        let actual = Expr::new(tokens.iter().collect());
-        assert_eq!(expect, actual);
+        ])
     }
 }
