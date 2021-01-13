@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use crate::token::{Code, Token, TokenKind, TokenIter};
+use crate::token::{Code, Token, TokenKind as TK, TokenIter};
 
 pub struct Program {
     stmts: Vec<Statement>,
@@ -21,18 +21,20 @@ impl Program {
     }
 }
 
-fn expect<'a>(it: &mut std::slice::Iter<&'a Token>, kind: Option<TokenKind>, s: Option<&str>) -> Result<&'a Token> {
+fn expect<'a>(it: &mut std::slice::Iter<&'a Token>, kind: Option<TK>, s: Option<&str>) -> Result<&'a Token> {
     let t = it.next().ok_or(UnexpectedEOF)?;
 
     if let Some(kind) = kind {
         if t.k != kind {
-            return Err(UnexpectedToken(*t.clone()));
+            let t = t.clone().clone();
+            return Err(UnexpectedToken(t));
         }
     }
     
     if let Some(s) = s {
         if !t.is(s) {
-            return Err(UnexpectedToken(*t.clone()));
+            let t = t.clone().clone();
+            return Err(UnexpectedToken(t));
         }
     }
 
@@ -68,10 +70,10 @@ impl Statement {
         let ident;
         let expr;
 
-        t = expect(&mut it, Some(Identifier), None)?;
+        t = expect(&mut it, Some(TK::Identifier), None)?;
 
         prefix = if t.is("public") || t.is("exported") {
-            t = expect(&mut it, Some(Identifier), None)?;
+            t = expect(&mut it, Some(TK::Identifier), None)?;
             None
         } else {
             None
@@ -79,9 +81,9 @@ impl Statement {
 
         ident = t.t.clone();
 
-        expect(&mut it, Some(Symbol), Some(":="));
+        expect(&mut it, Some(TK::Symbol), Some(":="))?;
 
-        expr = Expr::new(it.collect());
+        expr = Expr::new(it.map(|t| t.clone()).collect());
 
         Ok(Self::Assign{
             prefix,
@@ -98,6 +100,15 @@ pub enum AssignPrefix {
 #[derive(Debug, PartialEq, Clone)]
 pub struct Expr(Vec<Term>);
 
+impl Expr {
+    pub fn new(v: Vec<&Token>) -> Self {
+        let terms = v.iter()
+            .filter_map(|t| Term::new(t))
+            .collect();
+        Self(terms)
+    }
+}
+
 #[derive(Debug, PartialEq, Clone)]
 pub enum Term {
     Identifier(String),
@@ -105,9 +116,25 @@ pub enum Term {
 }
 use Term::*;
 
+impl Term {
+    pub fn new(tk: &Token) -> Option<Self> {
+        match tk.k {
+            TK::WhiteSpace => None,
+            TK::Numeric => tk.t
+                .parse::<Num>()
+                .map(NumericLiteral)
+                .map(Literal)
+                .ok(),
+            TK::Identifier | TK::Symbol => Some(Identifier(tk.t.clone())),
+            TK::Empty => None,
+        }
+    }
+}
+
+type Num = i64;
 #[derive(Debug, PartialEq, Clone)]
 pub enum LiteralValue {
-    NumericLiteral(i64),
+    NumericLiteral(Num),
     CharLiteral(char),
     StringLiteral(String),
     BoolLiteral(bool),
@@ -129,7 +156,7 @@ impl std::fmt::Display for ParseError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         use ParseError::*;
         match self {
-            InvalidToken(t1, t2) => write!(f, "invalid token: `{:?}` (appears after `{:?}`)", t1, t2),
+            UnexpectedToken(t) => write!(f, "unexpected token: `{:?}`", t),
             UnexpectedEOF => write!(f, "unexpected EOF"),
             Other => write!(f, "some error"),
         }
@@ -167,7 +194,7 @@ mod tests {
         let src = "f 1 + 2 * (-3 + 4)";
         let tokens = Code::from(src).expect("failed to tokenize").tokens;
 
-        let expect = Expr(vec![
+        let expect: Expr = Expr(vec![
             Literal(NumericLiteral(1)),
             Identifier("f".to_string()),
             Literal(NumericLiteral(2)),
@@ -179,7 +206,7 @@ mod tests {
             Identifier("+".to_string()),
         ]);
 
-        let actual = Expr::new(tokens);
+        let actual = Expr::new(tokens.iter().collect());
         assert_eq!(expect, actual);
     }
 }
