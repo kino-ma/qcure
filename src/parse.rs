@@ -22,7 +22,7 @@ impl Program {
     }
 }
 
-fn expect<'a>(it: &mut std::slice::Iter<&'a Token>, kind: Option<TK>, s: Option<&str>) -> Result<&'a Token> {
+fn expect<'a, I: std::iter::Iterator<Item = &'a Token>>(it: &mut I, kind: Option<TK>, s: Option<&str>) -> Result<&'a Token> {
     let t = it.next().ok_or(UnexpectedEOF)?;
 
     if let Some(kind) = kind {
@@ -65,7 +65,7 @@ impl Statement {
     }
 
     pub fn assign(tokens: &Vec<&Token>) -> Result<Self> {
-        let mut it = tokens.iter();
+        let mut it = tokens.iter().map(|t| *t);
         let mut t;
 
         let prefix;
@@ -85,7 +85,7 @@ impl Statement {
 
         expect(&mut it, Some(TK::Symbol), Some(":="))?;
 
-        expr = Expr::new(it.map(|t| t.clone()).collect());
+        expr = Expr::new(it.collect());
 
         Ok(Self::Assign{
             prefix,
