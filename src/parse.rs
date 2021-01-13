@@ -87,7 +87,7 @@ impl Statement {
 
         expect(&mut it, Some(TK::Symbol), Some(":="))?;
 
-        expr = Expr::new(it.collect());
+        expr = Expr::new(it.collect())?;
 
         Ok(Self::Assign{
             prefix,
@@ -106,17 +106,52 @@ pub enum AssignPrefix {
 pub struct Expr(Vec<Term>);
 
 impl Expr {
-    pub fn new(v: Vec<&Token>) -> Self {
-        let terms = v.iter()
+    pub fn new(v: Vec<&Token>) -> Result<Self> {
+        let v_terms: Vec<Term> = v.iter()
             .filter_map(|t| Term::new(t))
             .collect();
-        Self(terms)
+
+        let mut stack = ExprStack::new();
+        let mut stack_stack = Vec::new();
+        let mut terms = Vec::new();
+
+        let open_bracket = Operator("(".to_string());
+        let close_bracket = Operator(")".to_string());
+
+        for term in v_terms {
+            if term == open_bracket {
+                stack_stack.push(stack.clear());
+                continue;
+            }
+
+            if term == close_bracket {
+                if !stack.is_empty() {
+                    return Err(UnexpectedCloseBracket);
+                }
+
+                stack = stack_stack.pop()
+                    .ok_or(UnexpectedCloseBracket)?;
+                continue;
+            }
+
+            if stack.is_empty() {
+                stack.push(term);
+                continue;
+            }
+
+            terms.push(term);
+            let t = stack.pop().unwrap();
+            terms.push(t);
+        }
+
+        Ok(Self(terms))
     }
 }
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Term {
     Identifier(String),
+    Operator(String),
     Literal(LiteralValue),
 }
 use Term::*;
@@ -130,8 +165,23 @@ impl Term {
                 .map(NumericLiteral)
                 .map(Literal)
                 .ok(),
-            TK::Identifier | TK::Symbol => Some(Identifier(tk.t.clone())),
+            TK::Identifier => Some(Identifier(tk.t.clone())),
+            TK::Symbol => Some(Operator(tk.t.clone())),
             TK::Empty => None,
+        }
+    }
+
+    pub fn prior(&self) -> usize {
+        match self {
+            Identifier(_) => 9,
+            Literal(_) => 0,
+            Operator(op) => match &op[..] {
+                "*" | "/" | "%" => 7,
+                "+" | "-" => 6,
+                "&&" => 3,
+                "||" => 2,
+                _ => 4
+            }
         }
     }
 }
@@ -148,11 +198,81 @@ pub enum LiteralValue {
 }
 use LiteralValue::*;
 
+#[derive(Debug, PartialEq, Clone)]
+pub struct ExprStack{
+    stack: [Vec<Term>; 10],
+}
+
+impl ExprStack {
+    pub fn new() -> Self {
+        let stack = Self::empty_stack();
+        Self::from(stack)
+    }
+
+    pub fn from(stack: [Vec<Term>; 10]) -> Self {
+        Self { stack }
+    }
+
+    pub fn clear(&mut self) -> Self {
+        let stack = self.stack.clone();
+        self.stack = Self::empty_stack();
+        Self::from(stack)
+    }
+
+    pub fn push(&mut self, term: Term) {
+        self.stack[term.prior()].push(term);
+    }
+
+    pub fn pop(&mut self) -> Option<Term> {
+        let mut i = 0;
+        while self[i].is_empty() {
+            i += 1;
+        }
+        self[i].pop()
+    }
+    
+    pub fn is_empty(&self) -> bool {
+        self.stack
+            .iter()
+            .all(|stack| stack.is_empty())
+    }
+
+    pub fn empty_stack() -> [Vec<Term>; 10] {
+        [
+            Vec::new(),
+            Vec::new(),
+            Vec::new(),
+            Vec::new(),
+            Vec::new(),
+            Vec::new(),
+            Vec::new(),
+            Vec::new(),
+            Vec::new(),
+            Vec::new(),
+        ]
+    }
+}
+
+impl<I: std::slice::SliceIndex<[Vec<Term>]>> std::ops::Index<I> for ExprStack {
+    type Output = I::Output;
+
+    fn index(&self, index: I) -> &Self::Output {
+        &self.stack[index]
+    }
+}
+
+impl<I: std::slice::SliceIndex<[Vec<Term>]>> std::ops::IndexMut<I> for ExprStack {
+    fn index_mut(&mut self, index: I) -> &mut Self::Output {
+        &mut self.stack[index]
+    }
+}
+
 type Result<T> = std::result::Result<T, ParseError>;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum ParseError {
     UnexpectedToken(Token),
+    UnexpectedCloseBracket,
     UnexpectedEOF,
 }
 use ParseError::*;
@@ -163,6 +283,7 @@ impl std::fmt::Display for ParseError {
         match self {
             UnexpectedToken(t) => write!(f, "unexpected token: `{:?}`", t),
             UnexpectedEOF => write!(f, "unexpected EOF"),
+            UnexpectedCloseBracket => write!(f, "unexpected closing bracket")
         }
     }
 }
