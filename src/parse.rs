@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use crate::token::{Code, Token, TokenKind as TK, TokenIter};
 
+#[derive(Debug, PartialEq, Clone)]
 pub struct Program {
     stmts: Vec<Statement>,
 }
@@ -41,6 +42,7 @@ fn expect<'a>(it: &mut std::slice::Iter<&'a Token>, kind: Option<TK>, s: Option<
     Ok(t)
 }
 
+#[derive(Debug, PartialEq, Clone)]
 pub enum Statement {
     Assign { prefix: Option<AssignPrefix>, ident: String, expr: Expr },
 }
@@ -93,6 +95,7 @@ impl Statement {
     }
 }
 
+#[derive(Debug, PartialEq, Clone)]
 pub enum AssignPrefix {
 
 }
@@ -182,10 +185,11 @@ mod tests {
         let code = Code::from(src).expect("failed to tokenize");
 
         let mut iter = code.iter();
-        let mut stmts = Vec::new();
 
-        let expect = Statement::Assign { prefix: None, ident: "hoge".to_string(), expr: vec![Literal(NumericLiteral(1))]};
-        let actual = Statement::new(&mut iter);
+        let expect = Statement::Assign { prefix: None, ident: "hoge".to_string(), expr: Expr(vec![Literal(NumericLiteral(1))])};
+        let actual = Statement::new(&mut iter).unwrap();
+
+        assert_eq!(expect, actual);
     }
 
     #[test]
