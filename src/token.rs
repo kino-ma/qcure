@@ -49,9 +49,22 @@ impl Code {
     }
 
     pub fn iter(&self) -> TokenIter {
+        self.tokens.iter()
+    }
+}
+
+pub type TokenIter<'a> = std::slice::Iter<'a, Token>;
+
+/*
+impl IntoIterator for Code {
+    type Item = &'a Token;
+    type IntoIter = TokenIter<'a>;
+    
+    fn into_iter(self) -> Self::IntoIter {
         TokenIter::new(&self.tokens)
     }
 }
+*/
 
 impl Token {
     pub fn new(t: String, k: TokenKind) -> Self {
@@ -164,6 +177,7 @@ impl std::fmt::Display for TokenizeError {
 
 }
 
+/*
 pub struct TokenIter<'a> {
     it: std::slice::Iter<'a, Token>
 }
@@ -181,6 +195,7 @@ impl<'a> Iterator for TokenIter<'a> {
         self.it.next()
     }
 }
+*/
 
 impl std::error::Error for TokenizeError {
 
