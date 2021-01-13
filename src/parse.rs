@@ -323,7 +323,7 @@ mod tests {
 
         let expect: Expr = complex_expr();
 
-        let actual = Expr::new(tokens.iter().collect());
+        let actual = Expr::new(tokens.iter().collect()).expect("failed to parse expr");
         assert_eq!(expect, actual);
     }
 
