@@ -103,48 +103,33 @@ pub enum AssignPrefix {
 }
 
 #[derive(Debug, PartialEq, Clone)]
-pub struct Expr(Vec<Term>);
+pub enum Expr {
+    Term(Term),
+    Block { stmts: Vec<Statement>, rt_keyword: Option<()>, expr: Box<Expr> },
+    Bind,
+    FuncApplication(FuncApplication),
+    Selection,
+    Repetation,
+}
 
 impl Expr {
-    pub fn new(v: Vec<&Token>) -> Result<Self> {
-        let v_terms: Vec<Term> = v.iter()
-            .filter_map(|t| Term::new(t))
-            .collect();
+    pub fn new(v: &mut Vec<&Token>) -> Result<Self> {
+        let expr = Self::term(v)
+            .or(Self::func_app(v))?;
+            // .or(Self::block(v));
+            // ...
 
-        let mut stack = ExprStack::new();
-        let mut stack_stack = Vec::new();
-        let mut terms = Vec::new();
+        Ok(expr)
+    }
 
-        let open_bracket = Operator("(".to_string());
-        let close_bracket = Operator(")".to_string());
+    pub fn term(v: &mut Vec<&Token>) -> Result<Self> {
+        Term::new(v)
+            .map(Self::Term)
+    }
 
-        for term in v_terms {
-            if term == open_bracket {
-                stack_stack.push(stack.clear());
-                continue;
-            }
-
-            if term == close_bracket {
-                if !stack.is_empty() {
-                    return Err(UnexpectedCloseBracket);
-                }
-
-                stack = stack_stack.pop()
-                    .ok_or(UnexpectedCloseBracket)?;
-                continue;
-            }
-
-            if stack.is_empty() {
-                stack.push(term);
-                continue;
-            }
-
-            terms.push(term);
-            let t = stack.pop().unwrap();
-            terms.push(t);
-        }
-
-        Ok(Self(terms))
+    pub fn func_app(v: &mut Vec<&Token>) -> Result<Self> {
+        FuncApplication::new(v)
+            .map(Self::FuncApplication)
     }
 }
 
@@ -157,7 +142,31 @@ pub enum Term {
 use Term::*;
 
 impl Term {
-    pub fn new(tk: &Token) -> Option<Self> {
+    pub fn new(v: &mut Vec<&Token>) -> Result<Self> {
+        Ok()
+    }
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub enum FuncApplication {
+    Normal { op: Box<Term>, args: Vec<Term> },
+    UnaryOp { op: UnaryOp, arg: Box<Term> },
+    BinaryOpL { op: BinaryOpL, arg1: Box<Expr>, arg2: Box<Term> },
+    BinaryOpR { op: BinaryOpR, arg1: Box<Term>, arg2: Box<Expr> },
+}
+
+type UnaryOp = String;
+type BinaryOpL = String;
+type BinaryOpR = String;
+
+impl FuncApplication {
+    pub fn new(v: &mut Vec<&Token>) -> Result<Self> {
+        Ok()
+    }
+}
+
+impl Term {
+    pub fn new(tk: &mut Vec<&Token>) -> Result<Self> {
         match tk.k {
             TK::WhiteSpace => None,
             TK::Numeric => tk.t
