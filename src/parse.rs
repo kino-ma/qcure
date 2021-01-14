@@ -234,8 +234,8 @@ impl Term_ {
 }
 
 impl std::cmp::PartialOrd for Term_ {
-    fn partial_cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.prior().cmp(&other.prior())
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.prior().cmp(&other.prior()))
     }
 }
 
