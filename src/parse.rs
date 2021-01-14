@@ -163,16 +163,16 @@ impl FuncApplication {
 
 impl Term {
     pub fn new(tokens: &mut Vec<&Token>) -> Result<Self> {
-        let tk = tokens.remove(0);
+        let tk = tokens[0];
         match tk.k {
-            TK::Numeric => tk.t
+            TK::Numeric => tokens.remove(0).t
                 .parse::<Num>()
                 .map(NumericLiteral)
                 .map(Literal)
                 .or(Err(InvalidNumeric)),
-            TK::Identifier => Ok(Identifier(tk.t.clone())),
-            TK::Symbol => Ok(Operator(tk.t.clone())),
-            _ => Err(Nil)
+            TK::Identifier => Ok(Identifier(tokens.remove(0).t)),
+            TK::Symbol => Ok(Operator(tokens.remove(0).t)),
+            _ => Err(CouldntParse)
         }
     }
 
@@ -280,7 +280,7 @@ pub enum ParseError {
     UnexpectedCloseBracket,
     UnexpectedEOF,
     InvalidNumeric,
-    Nil,
+    CouldntParse,
 }
 use ParseError::*;
 
