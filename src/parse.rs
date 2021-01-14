@@ -160,7 +160,7 @@ impl FuncApplicationOp_ {
     }
 
     pub fn unary_op(v: &mut Vec<&Token>) -> Result<Self> {
-        if v[0].k == TK::Symbol {
+        if expect(&mut v.iter().map(|t| t.clone()), Some(TK::Symbol), None).is_ok() {
             let arg = Box::new(FuncApplication_::new(v)?);
             let op = v.remove(0).t.clone();
             Ok(Self::UnaryOp {
