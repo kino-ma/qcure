@@ -221,7 +221,7 @@ impl Term_ {
     pub fn prior(&self) -> usize {
         match self {
             Identifier(_) => 9,
-            Literal(_) => 0,
+            Literal(_) => 10,
             Operator(op) => match &op[..] {
                 "*" | "/" | "%" => 7,
                 "+" | "-" => 6,
