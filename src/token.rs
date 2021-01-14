@@ -1,15 +1,15 @@
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub struct Code {
     pub tokens: Vec<Token>
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub struct Token {
     pub t: String,
     pub k: TokenKind,
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub enum TokenKind {
     WhiteSpace,
     Numeric,
@@ -22,7 +22,7 @@ use TokenKind::*;
 type ConsumeResult = std::result::Result<(Token, String), String>;
 type Result<T> = std::result::Result<T, TokenizeError>;
 
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub enum TokenizeError {}
 
 impl Code {

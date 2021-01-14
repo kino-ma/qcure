@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use crate::token::{Code, Token, TokenKind as TK, TokenIter};
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub struct Program {
     stmts: Vec<Statement>,
 }
@@ -42,7 +42,7 @@ fn expect<'a, I: std::iter::Iterator<Item = &'a Token>>(it: &mut I, kind: Option
     Ok(t)
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub enum Statement {
     Assign { prefix: Option<AssignPrefix>, ident: String, expr: Expr_ },
 }
@@ -97,12 +97,12 @@ impl Statement {
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub enum AssignPrefix {
 
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub enum Expr_ {
     Term(Term_),
     FuncApplication(FuncApplicationOp_),
@@ -130,7 +130,7 @@ impl Expr_ {
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub enum FuncApplicationOp_ {
     FuncApplication(FuncApplication_),
     UnaryOp { op: UnaryOp_, arg: Box<FuncApplication_> },
@@ -171,7 +171,7 @@ impl FuncApplicationOp_ {
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub enum FuncApplication_ {
     Term(Term_),
     Normal { op: Box<FuncApplication_>, args: Vec<Term_> },
@@ -191,7 +191,7 @@ impl FuncApplication_ {
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub enum Term_ {
     Identifier(String),
     Operator(String),
@@ -233,6 +233,12 @@ impl Term_ {
     }
 }
 
+impl std::cmp::PartialOrd for Term_ {
+    fn partial_cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.prior().cmp(&other.prior())
+    }
+}
+
 impl std::cmp::Ord for Term_ {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         self.prior().cmp(&other.prior())
@@ -240,7 +246,7 @@ impl std::cmp::Ord for Term_ {
 }
 
 type Num = i64;
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub enum LiteralValue {
     NumericLiteral(Num),
     CharLiteral(char),
@@ -322,7 +328,7 @@ impl<I: std::slice::SliceIndex<[Vec<Term_>]>> std::ops::IndexMut<I> for ExprStac
 
 type Result<T> = std::result::Result<T, ParseError>;
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub enum ParseError {
     UnexpectedToken(Token),
     UnexpectedCloseBracket,
