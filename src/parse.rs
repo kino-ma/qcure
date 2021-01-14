@@ -524,6 +524,36 @@ mod tests {
         assert_eq!(expect, actual);
     }
 
+    #[test]
+    fn new_simple_term() {
+        let src = "1";
+        let code = Code::from(src).expect("failed to tokenize");
+
+        let expect = Literal(NumericLiteral(1));
+
+        let mut v = code.tokens.iter().collect();
+        let actual = Term_::new(&mut v).expect("failed to parse");
+
+        assert_eq!(expect, actual);
+    }
+
+    #[test]
+    fn new_bracket_term() {
+        let src = "(1 + 2)";
+        let code = Code::from(src).expect("failed to tokenize");
+
+        let expect = Term_::Expr(Box::new(Expr_::FuncApplication(BinaryOpL {
+            op: "+".to_string(),
+            arg1: Box::new(FuncApplication(Term(Literal(NumericLiteral(1))))),
+            arg2: Box::new(FuncApplication(Term(Literal(NumericLiteral(2))))),
+        })));
+
+        let mut v = code.tokens.iter().collect();
+        let actual = Term_::new(&mut v).expect("failed to parse");
+
+        assert_eq!(expect, actual);
+    }
+
     fn complex_expr_src() -> &'static str {
         "f 1 + 2 * (-3 + 4)"
     }
