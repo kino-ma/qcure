@@ -137,6 +137,39 @@ pub enum FuncApplicationOp_ {
     BinaryOpL { op: BinaryOpL_, arg1: Box<FuncApplicationOp_>, arg2: Box<FuncApplicationOp_> },
     BinaryOpR { op: BinaryOpR_, arg1: Box<FuncApplicationOp_>, arg2: Box<FuncApplicationOp_> },
 }
+use FuncApplicationOp_::*;
+
+impl FuncApplicationOp_ {
+    pub fn new(v: &mut Vec<&Token>) -> Result<Self> {
+        Self::app(v)
+            .or(Self::unary_op(v))
+            .or(Self::binary_op_l(v))
+            //.or(Self::binary_op_r(v))
+    }
+
+    pub fn app(v: &mut Vec<&Token>) -> Result<Self> {
+        FuncApplication_::new(v)
+            .map(FuncApplication)
+    }
+
+    pub fn unary_op(v: &mut Vec<&Token>) -> Result<Self> {
+        if v[0].k == TK::Symbol {
+            let arg = Box::new(FuncApplication_::new(v)?);
+            let op = v.remove(0);
+            Ok(Self::UnaryOp {
+                op,
+                arg
+            })
+        } else {
+            Err(CouldntParse)
+        }
+    }
+
+    pub fn binary_op_l(v: &mut Vec<&Token>) -> Result<Self> {
+        FuncApplication_::new(v)
+            .map(FuncApplication)
+    }
+}
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum FuncApplication_ {
