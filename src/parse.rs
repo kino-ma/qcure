@@ -210,16 +210,33 @@ type BinaryOpR_ = String;
 impl FuncApplication_ {
     pub fn new(v: &mut Vec<&Token>) -> Result<Self> {
         let first = Term_::new(v)?;
-        let args = v.iter()
-            .take_while(|t| t.k == TK::Numeric || t.k == TK::Identifier);
-        Ok(())
+        v.reverse();
+
+        let mut args = Vec::new();
+        while let Some(tk) = v.pop() {
+            match Term_::new(tk) {
+                Ok(tk) => args.push(tk),
+                Err(_) => v.push(tk),
+            }
+        }
+        v.reverse();
+        args.reverse();
+
+        return Ok(
+            match args.len() {
+                0 => Term(first),
+                _ => Normal {
+                    op: Box::new(first),
+                    args
+                }
+            }
+        )
     }
 }
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum Term_ {
     Identifier(String),
-    Operator(String),
     Literal(LiteralValue),
     Expr(Box<Expr_>),
     Block { stmts: Vec<Statement>, rt_keyword: Option<()>, expr: Box<Expr_> },
@@ -238,7 +255,6 @@ impl Term_ {
                 .map(Literal)
                 .or(Err(InvalidNumeric)),
             TK::Identifier => Ok(Identifier(tokens.remove(0).t)),
-            TK::Symbol => Ok(Operator(tokens.remove(0).t)),
             _ => Err(CouldntParse)
         }
     }
