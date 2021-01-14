@@ -538,7 +538,20 @@ mod tests {
     }
 
     #[test]
-    fn new_bracket_term() {
+    fn new_simple_bracket_term() {
+        let src = "(1)";
+        let code = Code::from(src).expect("failed to tokenize");
+
+        let expect = Term_::Expr(Box::new(Expr_::FuncApplication(FuncApplication(Term(Literal(NumericLiteral(1)))))));
+
+        let mut v = code.tokens.iter().collect();
+        let actual = Term_::new(&mut v).expect("failed to parse");
+
+        assert_eq!(expect, actual);
+    }
+
+    #[test]
+    fn new_complex_bracket_term() {
         let src = "(1 + 2)";
         let code = Code::from(src).expect("failed to tokenize");
 
