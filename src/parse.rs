@@ -233,6 +233,12 @@ impl Term_ {
     }
 }
 
+impl std::cmp::Ord for Term_ {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.prior().cmp(&other.prior())
+    }
+}
+
 type Num = i64;
 #[derive(Debug, PartialEq, Clone)]
 pub enum LiteralValue {
