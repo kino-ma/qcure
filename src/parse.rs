@@ -475,6 +475,23 @@ mod tests {
         assert_eq!(expect, actual);
     }
 
+    #[test]
+    fn new_binary_op() {
+        let src = "1 + 2";
+        let code = Code::from(src).expect("failed to tokenize");
+
+        let expect = BinaryOpL {
+            op: "+".to_string(),
+            arg1: Box::new(FuncApplication(Term(Literal(NumericLiteral(1))))),
+            arg2: Box::new(FuncApplication(Term(Literal(NumericLiteral(2))))),
+        };
+
+        let mut v = code.tokens.iter().collect();
+        let actual = FuncApplicationOp_::new(&mut v).expect("failed to parse");
+
+        assert_eq!(expect, actual);
+    }
+
     fn complex_expr_src() -> &'static str {
         "f 1 + 2 * (-3 + 4)"
     }
