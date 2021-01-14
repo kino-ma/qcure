@@ -448,6 +448,19 @@ mod tests {
     }
 
     #[test]
+    fn new_simple_expr_ident() {
+        let src = "a";
+        let code = Code::from(src).expect("failed to tokenize");
+
+        let expect = Expr_::FuncApplication(FuncApplication(Term(Identifier("a".to_string()))));
+
+        let mut v = code.tokens.iter().collect();
+        let actual = Expr_::new(&mut v).expect("failed to parse");
+
+        assert_eq!(expect, actual);
+    }
+
+    #[test]
     fn new_simple_expr_add() {
         let src = "1 + 2";
         let code = Code::from(src).expect("failed to tokenize");
