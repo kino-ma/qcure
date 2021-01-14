@@ -476,7 +476,7 @@ mod tests {
     }
 
     #[test]
-    fn new_binary_op() {
+    fn new_simple_binary_op() {
         let src = "1 + 2";
         let code = Code::from(src).expect("failed to tokenize");
 
@@ -488,6 +488,38 @@ mod tests {
 
         let mut v = code.tokens.iter().collect();
         let actual = FuncApplicationOp_::new(&mut v).expect("failed to parse");
+
+        assert_eq!(expect, actual);
+    }
+
+    #[test]
+    fn new_simple_func_app() {
+        let src = "f 1";
+        let code = Code::from(src).expect("failed to tokenize");
+
+        let expect = Normal {
+            op: Box::new(Term_::Identifier("f".to_string())),
+            args: vec![Literal(NumericLiteral(1))],
+        };
+
+        let mut v = code.tokens.iter().collect();
+        let actual = FuncApplication_::new(&mut v).expect("failed to parse");
+
+        assert_eq!(expect, actual);
+    }
+
+    #[test]
+    fn new_complex_func_app() {
+        let src = "f 1 2 3";
+        let code = Code::from(src).expect("failed to tokenize");
+
+        let expect = Normal {
+            op: Box::new(Term_::Identifier("f".to_string())),
+            args: vec![Literal(NumericLiteral(1)), Literal(NumericLiteral(2)), Literal(NumericLiteral(3))],
+        };
+
+        let mut v = code.tokens.iter().collect();
+        let actual = FuncApplication_::new(&mut v).expect("failed to parse");
 
         assert_eq!(expect, actual);
     }
