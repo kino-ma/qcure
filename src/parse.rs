@@ -118,24 +118,17 @@ pub enum AssignPrefix {
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum Expr_ {
-    Term(Term_),
     FuncApplication(FuncApplicationOp_),
     Bind,
 }
 
 impl Expr_ {
     pub fn new(v: &mut Vec<&Token>) -> Result<Self> {
-        let expr = Self::term(v)
-            .or(Self::func_app(v))?;
-            // .or(Self::block(v));
+        let expr = Self::func_app(v)?;
+            // .or(Self::bind(v));
             // ...
 
         Ok(expr)
-    }
-
-    pub fn term(v: &mut Vec<&Token>) -> Result<Self> {
-        Term_::new(v)
-            .map(Self::Term)
     }
 
     pub fn func_app(v: &mut Vec<&Token>) -> Result<Self> {
@@ -169,7 +162,7 @@ impl FuncApplicationOp_ {
     pub fn unary_op(v: &mut Vec<&Token>) -> Result<Self> {
         if v[0].k == TK::Symbol {
             let arg = Box::new(FuncApplication_::new(v)?);
-            let op = Operator(v.remove(0).t);
+            let op = v.remove(0).t;
             Ok(Self::UnaryOp {
                 op,
                 arg
@@ -191,7 +184,7 @@ impl FuncApplicationOp_ {
         let lhs = FuncApplicationOp_::new(v)?;
         let rhs = FuncApplicationOp_::new(&mut v2)?;
 
-        let op = BinaryOpL_::from(min_op)?;
+        let op = min_op.t;
         let arg1 = Box::new(lhs);
         let arg2 = Box::new(rhs);
 
@@ -206,19 +199,19 @@ impl FuncApplicationOp_ {
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum FuncApplication_ {
     Term(Term_),
-    Normal { op: Box<FuncApplication_>, args: Vec<Term_> },
+    Normal { op: Box<Term_>, args: Vec<Term_> },
 }
 use FuncApplication_::*;
 
-type UnaryOp_ = Term_;
-type BinaryOpL_ = Term_;
-type BinaryOpR_ = Term_;
+type UnaryOp_ = String;
+type BinaryOpL_ = String;
+type BinaryOpR_ = String;
 
 impl FuncApplication_ {
     pub fn new(v: &mut Vec<&Token>) -> Result<Self> {
-        let first = v[0];
-        
-        if first.k == TK::Symbol {}
+        let first = Term_::new(v)?;
+        let args = v.iter()
+            .take_while(|t| t.k == TK::Numeric || t.k == TK::Identifier);
         Ok(())
     }
 }
@@ -442,27 +435,21 @@ mod tests {
     fn complex_expr() -> Expr_ {
         Expr_::FuncApplication (
             FuncApplicationOp_::BinaryOpL {
-                op: Term_::Operator("+".to_string()),
+                op: "+".to_string(),
                 arg1: Box::new(FuncApplicationOp_::FuncApplication(FuncApplication_::Normal{
-                        op: Box::new(FuncApplication_::Term(
-                            Term_::Identifier("f".to_string())
-                        )),
+                        op: Box::new(Term_::Identifier("f".to_string())),
                         args: vec![Term_::Literal(NumericLiteral(1))]
                     })
                 ),
                 arg2: Box::new(FuncApplicationOp_::BinaryOpL {
-                    op: Term_::Operator("*".to_string()),
+                    op: "*".to_string(),
                     arg1: Box::new(FuncApplicationOp_::FuncApplication(FuncApplication_::Term(Term_::Literal(LiteralValue::NumericLiteral(
                         2
                     ))))),
                     arg2: Box::new(FuncApplicationOp_::BinaryOpL {
-                        op: Term_::Operator(
-                            "+".to_string()
-                        ),
+                        op: "+".to_string(),
                         arg1: Box::new(FuncApplicationOp_::UnaryOp{
-                            op: Term_::Operator(
-                                "-".to_string()
-                            ),
+                            op: "-".to_string(),
                             arg: Box::new(FuncApplication_::Term(Term_::Literal(LiteralValue::NumericLiteral(
                                 3
                             ))))
