@@ -105,11 +105,8 @@ pub enum AssignPrefix {
 #[derive(Debug, PartialEq, Clone)]
 pub enum Expr {
     Term(Term),
-    Block { stmts: Vec<Statement>, rt_keyword: Option<()>, expr: Box<Expr> },
+    FuncApplication(FuncApplicationOp),
     Bind,
-    FuncApplication(FuncApplication),
-    Selection,
-    Repetation,
 }
 
 impl Expr {
@@ -129,7 +126,34 @@ impl Expr {
 
     pub fn func_app(v: &mut Vec<&Token>) -> Result<Self> {
         FuncApplication::new(v)
-            .map(Self::FuncApplication)
+            .map(Self::FuncApplicationOp)
+    }
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub enum FuncApplicationOp {
+    FuncApplication(FuncApplication),
+    UnaryOp { op: UnaryOp, arg: Box<FuncApplication> },
+    BinaryOpL { op: BinaryOpL, arg1: Box<FuncApplicationOp>, arg2: Box<FuncApplicationOp> },
+    BinaryOpR { op: BinaryOpR, arg1: Box<FuncApplicationOp>, arg2: Box<FuncApplicationOp> },
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub enum FuncApplication {
+    Term(Term),
+    Normal { op: Box<FuncApplication>, args: Vec<Term> },
+}
+
+type UnaryOp = Term;
+type BinaryOpL = Term;
+type BinaryOpR = Term;
+
+impl FuncApplication {
+    pub fn new(v: &mut Vec<&Token>) -> Result<Self> {
+        let first = v[0];
+        
+        if first.k == TK::Symbol {}
+        Ok(())
     }
 }
 
@@ -138,28 +162,12 @@ pub enum Term {
     Identifier(String),
     Operator(String),
     Literal(LiteralValue),
+    Expr(Box<Expr>),
+    Block { stmts: Vec<Statement>, rt_keyword: Option<()>, expr: Box<Expr> },
+    Selection,
+    Repetation,
 }
 use Term::*;
-
-#[derive(Debug, PartialEq, Clone)]
-pub enum FuncApplication {
-    Normal { op: Box<Term>, args: Vec<Term> },
-    UnaryOp { op: UnaryOp, arg: Box<Term> },
-    BinaryOpL { op: BinaryOpL, arg1: Box<Expr>, arg2: Box<Term> },
-    BinaryOpR { op: BinaryOpR, arg1: Box<Term>, arg2: Box<Expr> },
-}
-
-type UnaryOp = String;
-type BinaryOpL = String;
-type BinaryOpR = String;
-
-impl FuncApplication {
-    pub fn new(v: &mut Vec<&Token>) -> Result<Self> {
-        let first = v[0];
-        
-        if first.k == TK::Symbol
-    }
-}
 
 impl Term {
     pub fn new(tokens: &mut Vec<&Token>) -> Result<Self> {
@@ -317,7 +325,8 @@ mod tests {
 
         let mut iter = code.iter();
 
-        let expect = Statement::Assign { prefix: None, ident: "hoge".to_string(), expr: Expr(vec![Literal(NumericLiteral(1))])};
+        let expr = Expr::new(&mut vec![&Token::new("1".to_string(), TK::Numeric)]).unwrap();
+        let expect = Statement::Assign { prefix: None, ident: "hoge".to_string(), expr };
         let actual = Statement::new(&mut iter).unwrap();
 
         assert_eq!(expect, actual);
@@ -339,7 +348,41 @@ mod tests {
     }
 
     fn complex_expr() -> Expr {
-        Expr(vec![
+        Expr::FuncApplication (
+            FuncApplicationOp::BinaryOpL {
+                op: Term::Operator("+".to_string()),
+                arg1: Box::new(FuncApplicationOp::FuncApplication(FuncApplication::Normal{
+                        op: Box::new(FuncApplication::Term(
+                            Term::Identifier("f".to_string())
+                        )),
+                        args: vec![Term::Literal(NumericLiteral(1))]
+                    })
+                ),
+                arg2: Box::new(FuncApplicationOp::BinaryOpL {
+                    op: Term::Operator("*".to_string()),
+                    arg1: Box::new(FuncApplicationOp::FuncApplication(FuncApplication::Term(Term::Literal(LiteralValue::NumericLiteral(
+                        2
+                    ))))),
+                    arg2: Box::new(FuncApplicationOp::BinaryOpL {
+                        op: Term::Operator(
+                            "+".to_string()
+                        ),
+                        arg1: Box::new(FuncApplicationOp::UnaryOp{
+                            op: Term::Operator(
+                                "-".to_string()
+                            ),
+                            arg: Box::new(FuncApplication::Term(Term::Literal(LiteralValue::NumericLiteral(
+                                3
+                            ))))
+                        }),
+                        arg2: Box::new(FuncApplicationOp::FuncApplication(FuncApplication::Term(Term::Literal(LiteralValue::NumericLiteral(
+                            4
+                        )))))
+                    })
+                })
+            }
+        )
+        /*Expr(vec![
             Literal(NumericLiteral(1)),
             Identifier("f".to_string()),
             Literal(NumericLiteral(2)),
@@ -349,6 +392,6 @@ mod tests {
             Identifier("+".to_string()),
             Identifier("*".to_string()),
             Identifier("+".to_string()),
-        ])
+        ])*/
     }
 }
