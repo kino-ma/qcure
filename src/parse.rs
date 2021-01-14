@@ -42,6 +42,20 @@ fn expect<'a, I: std::iter::Iterator<Item = &'a Token>>(it: &mut I, kind: Option
     Ok(t)
 }
 
+fn priority(tk: &Token) -> usize {
+    match tk.k {
+        Symbol => match t.t {
+            "*" | "/" | "%" => 7,
+            "+" | "-" => 6,
+            "&&" => 3,
+            "||" => 2,
+            _ => 4
+        },
+        TK::Identifier => 9,
+        _ => 10
+    }
+}
+
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum Statement {
     Assign { prefix: Option<AssignPrefix>, ident: String, expr: Expr_ },
@@ -166,6 +180,8 @@ impl FuncApplicationOp_ {
     }
 
     pub fn binary_op_l(v: &mut Vec<&Token>) -> Result<Self> {
+        let it = v.iter().rev();
+        let min_op = it.min();
         FuncApplication_::new(v)
             .map(FuncApplication)
     }
@@ -220,15 +236,16 @@ impl Term_ {
 
     pub fn prior(&self) -> usize {
         match self {
-            Identifier(_) => 9,
             Literal(_) => 10,
+            Identifier(_) => 9,
             Operator(op) => match &op[..] {
                 "*" | "/" | "%" => 7,
                 "+" | "-" => 6,
                 "&&" => 3,
                 "||" => 2,
                 _ => 4
-            }
+            },
+            _ => 10
         }
     }
 }
