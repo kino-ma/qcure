@@ -174,11 +174,11 @@ impl FuncApplicationOp_ {
 
     pub fn binary_op_l(v: &mut Vec<&Token>) -> Result<Self> {
         let it = v.iter().rev();
-        let min_op = it.min_by_key(|t| priority(t)).ok_or(UnexpectedEOF)?;
-        let idx = v.iter().rev().rposition(|t| t == min_op).unwrap();
+        let min_op = it.min_by_key(|t| priority(t)).ok_or(UnexpectedEOF)?.clone();
+        let idx = v.iter().rev().rposition(|t| t == &min_op).unwrap();
 
         // assert poped item is symbol that we found above
-        assert_eq!(v.pop().unwrap(), min_op);
+        assert_eq!(&v.pop().unwrap(), min_op);
 
         let mut v2 = v.split_off(idx - 1);
         let lhs = FuncApplicationOp_::new(v)?;
@@ -214,7 +214,7 @@ impl FuncApplication_ {
 
         let mut args = Vec::new();
         while let Some(tk) = v.pop() {
-            match Term_::new(tk) {
+            match Term_::from(tk) {
                 Ok(tk) => args.push(tk),
                 Err(_) => v.push(tk),
             }
@@ -267,7 +267,6 @@ impl Term_ {
                 .map(Literal)
                 .or(Err(InvalidNumeric)),
             TK::Identifier => Ok(Identifier(tk.t)),
-            TK::Symbol => Ok(Operator(tk.t)),
             _ => Err(CouldntParse)
         }
     }
@@ -276,13 +275,13 @@ impl Term_ {
         match self {
             Literal(_) => 10,
             Identifier(_) => 9,
-            Operator(op) => match &op[..] {
+            /*Operator(op) => match &op[..] {
                 "*" | "/" | "%" => 7,
                 "+" | "-" => 6,
                 "&&" => 3,
                 "||" => 2,
                 _ => 4
-            },
+            },*/
             _ => 10
         }
     }
