@@ -44,7 +44,7 @@ fn expect<'a, I: std::iter::Iterator<Item = &'a Token>>(it: &mut I, kind: Option
 
 fn priority(tk: &Token) -> usize {
     match tk.k {
-        Symbol => match t.t {
+        Symbol => match &tk.t[..] {
             "*" | "/" | "%" => 7,
             "+" | "-" => 6,
             "&&" => 3,
@@ -181,9 +181,25 @@ impl FuncApplicationOp_ {
 
     pub fn binary_op_l(v: &mut Vec<&Token>) -> Result<Self> {
         let it = v.iter().rev();
-        let min_op = it.min();
-        FuncApplication_::new(v)
-            .map(FuncApplication)
+        let min_op = it.min_by_key(|t| priority(t)).ok_or(UnexpectedEOF)?;
+        let idx = v.iter().rev().rposition(|t| t == min_op).unwrap();
+
+        // assert poped item is symbol that we found above
+        assert_eq!(v.pop().unwrap(), min_op);
+
+        let mut v2 = v.split_off(idx - 1);
+        let lhs = FuncApplicationOp_::new(v)?;
+        let rhs = FuncApplicationOp_::new(&mut v2)?;
+
+        let op = BinaryOpL_::from(min_op)?;
+        let arg1 = Box::new(lhs);
+        let arg2 = Box::new(rhs);
+
+        Ok(BinaryOpL {
+            op,
+            arg1,
+            arg2
+        })
     }
 }
 
@@ -230,6 +246,19 @@ impl Term_ {
                 .or(Err(InvalidNumeric)),
             TK::Identifier => Ok(Identifier(tokens.remove(0).t)),
             TK::Symbol => Ok(Operator(tokens.remove(0).t)),
+            _ => Err(CouldntParse)
+        }
+    }
+
+    pub fn from(tk: &Token) -> Result<Self> {
+        match tk.k {
+            TK::Numeric => tk.t
+                .parse::<Num>()
+                .map(NumericLiteral)
+                .map(Literal)
+                .or(Err(InvalidNumeric)),
+            TK::Identifier => Ok(Identifier(tk.t)),
+            TK::Symbol => Ok(Operator(tk.t)),
             _ => Err(CouldntParse)
         }
     }
