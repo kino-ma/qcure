@@ -155,7 +155,7 @@ impl FuncApplicationOp_ {
     pub fn unary_op(v: &mut Vec<&Token>) -> Result<Self> {
         if v[0].k == TK::Symbol {
             let arg = Box::new(FuncApplication_::new(v)?);
-            let op = v.remove(0);
+            let op = Operator(v.remove(0).t);
             Ok(Self::UnaryOp {
                 op,
                 arg
