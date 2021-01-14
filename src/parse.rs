@@ -66,7 +66,7 @@ impl Statement {
 
     pub fn assign(tokens: &Vec<&Token>) -> Result<Self> {
         let mut it = tokens.iter()
-            .filter(|t| t.k != TK::WhiteSpace)
+            .filter(|t| t.k != TK::WhiteSpace && t.k != TK::Empty)
             .map(|t| t.clone());
         let mut t;
 
@@ -87,7 +87,7 @@ impl Statement {
 
         expect(&mut it, Some(TK::Symbol), Some(":="))?;
 
-        expr = Expr::new(it.collect())?;
+        expr = Expr::new(&mut it.collect())?;
 
         Ok(Self::Assign{
             prefix,
@@ -141,12 +141,6 @@ pub enum Term {
 }
 use Term::*;
 
-impl Term {
-    pub fn new(v: &mut Vec<&Token>) -> Result<Self> {
-        Ok()
-    }
-}
-
 #[derive(Debug, PartialEq, Clone)]
 pub enum FuncApplication {
     Normal { op: Box<Term>, args: Vec<Term> },
@@ -166,17 +160,17 @@ impl FuncApplication {
 }
 
 impl Term {
-    pub fn new(tk: &mut Vec<&Token>) -> Result<Self> {
+    pub fn new(tokens: &mut Vec<&Token>) -> Result<Self> {
+        let tk = tokens.remove(0);
         match tk.k {
-            TK::WhiteSpace => None,
             TK::Numeric => tk.t
                 .parse::<Num>()
                 .map(NumericLiteral)
                 .map(Literal)
-                .ok(),
-            TK::Identifier => Some(Identifier(tk.t.clone())),
-            TK::Symbol => Some(Operator(tk.t.clone())),
-            TK::Empty => None,
+                .or(Err(InvalidNumeric)),
+            TK::Identifier => Ok(Identifier(tk.t.clone())),
+            TK::Symbol => Ok(Operator(tk.t.clone())),
+            _ => Err(Nil)
         }
     }
 
@@ -283,6 +277,8 @@ pub enum ParseError {
     UnexpectedToken(Token),
     UnexpectedCloseBracket,
     UnexpectedEOF,
+    InvalidNumeric,
+    Nil,
 }
 use ParseError::*;
 
