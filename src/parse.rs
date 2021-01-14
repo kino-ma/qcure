@@ -43,7 +43,7 @@ fn expect<'a, I: std::iter::Iterator<Item = &'a Token>>(it: &mut I, kind: Option
 }
 
 fn priority(tk: &Token) -> usize {
-    match tk.k {
+    match &tk.k {
         Symbol => match &tk.t[..] {
             "*" | "/" | "%" => 7,
             "+" | "-" => 6,
@@ -162,7 +162,7 @@ impl FuncApplicationOp_ {
     pub fn unary_op(v: &mut Vec<&Token>) -> Result<Self> {
         if v[0].k == TK::Symbol {
             let arg = Box::new(FuncApplication_::new(v)?);
-            let op = v.remove(0).t;
+            let op = v.remove(0).t.clone();
             Ok(Self::UnaryOp {
                 op,
                 arg
@@ -178,13 +178,13 @@ impl FuncApplicationOp_ {
         let idx = v.iter().rev().rposition(|t| t == &min_op).unwrap();
 
         // assert poped item is symbol that we found above
-        assert_eq!(&v.pop().unwrap(), min_op);
+        assert_eq!(v.pop().unwrap(), min_op);
 
         let mut v2 = v.split_off(idx - 1);
         let lhs = FuncApplicationOp_::new(v)?;
         let rhs = FuncApplicationOp_::new(&mut v2)?;
 
-        let op = min_op.t;
+        let op = min_op.t.clone();
         let arg1 = Box::new(lhs);
         let arg2 = Box::new(rhs);
 
@@ -254,7 +254,7 @@ impl Term_ {
                 .map(NumericLiteral)
                 .map(Literal)
                 .or(Err(InvalidNumeric)),
-            TK::Identifier => Ok(Identifier(tokens.remove(0).t)),
+            TK::Identifier => Ok(Identifier(tokens.remove(0).t.clone())),
             _ => Err(CouldntParse)
         }
     }
@@ -266,7 +266,7 @@ impl Term_ {
                 .map(NumericLiteral)
                 .map(Literal)
                 .or(Err(InvalidNumeric)),
-            TK::Identifier => Ok(Identifier(tk.t)),
+            TK::Identifier => Ok(Identifier(tk.t.clone())),
             _ => Err(CouldntParse)
         }
     }
@@ -397,8 +397,10 @@ impl std::fmt::Display for ParseError {
         use ParseError::*;
         match self {
             UnexpectedToken(t) => write!(f, "unexpected token: `{:?}`", t),
+            UnexpectedCloseBracket => write!(f, "unexpected closing bracket"),
             UnexpectedEOF => write!(f, "unexpected EOF"),
-            UnexpectedCloseBracket => write!(f, "unexpected closing bracket")
+            InvalidNumeric => write!(f, "invalid numeric literal"),
+            CouldntParse => write!(f, "couldn't parse as such type"),
         }
     }
 }
