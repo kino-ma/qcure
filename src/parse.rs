@@ -155,7 +155,9 @@ type BinaryOpR = String;
 
 impl FuncApplication {
     pub fn new(v: &mut Vec<&Token>) -> Result<Self> {
-        Ok()
+        let first = v[0];
+        
+        if first.k == TK::Symbol
     }
 }
 
@@ -328,7 +330,7 @@ mod tests {
 
         let expect: Expr = complex_expr();
 
-        let actual = Expr::new(tokens.iter().collect()).expect("failed to parse expr");
+        let actual = Expr::new(&mut tokens.iter().collect()).expect("failed to parse expr");
         assert_eq!(expect, actual);
     }
 
