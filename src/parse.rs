@@ -522,6 +522,19 @@ mod tests {
     }
 
     #[test]
+    fn new_simple_func_term() {
+        let src = "1";
+        let code = Code::from(src).expect("failed to tokenize");
+
+        let expect = Term(Literal(NumericLiteral(1)));
+
+        let mut v = code.tokens.iter().collect();
+        let actual = FuncApplication_::new(&mut v).expect("failed to parse");
+
+        assert_eq!(expect, actual);
+    }
+
+    #[test]
     fn new_complex_func_app() {
         let src = "f 1 2 3";
         let code = Code::from(src).expect("failed to tokenize");
