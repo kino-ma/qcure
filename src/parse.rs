@@ -468,13 +468,13 @@ mod tests {
     fn new_statement() {
         let src = "hoge := 1";
         let code = Code::from(src).expect("failed to tokenize");
-        let iter = code.iter().filter(|tk| tk.k != TK::WhiteSpace && tk.k != TK::Empty);
+        let mut v = create_vec(&code);
 
 
         let expr = Expr_::new(&mut vec![&Token::new("1".to_string(), TK::Numeric)]).unwrap();
         println!("expr done");
         let expect = Statement::Assign { prefix: None, ident: "hoge".to_string(), expr };
-        let actual = Statement::new(&mut iter.collect()).unwrap();
+        let actual = Statement::new(&mut v).unwrap();
 
         assert_eq!(expect, actual);
     }
@@ -483,10 +483,10 @@ mod tests {
     fn new_simple_expr_1() {
         let src = "1";
         let code = Code::from(src).expect("failed to tokenize");
+        let mut v = create_vec(&code);
 
         let expect = Expr_::FuncApplication(FuncApplication(Term(Literal(NumericLiteral(1)))));
 
-        let mut v = code.tokens.iter().collect();
         let actual = Expr_::new(&mut v).expect("failed to parse");
 
         assert_eq!(expect, actual);
@@ -496,10 +496,10 @@ mod tests {
     fn new_simple_expr_ident() {
         let src = "a";
         let code = Code::from(src).expect("failed to tokenize");
+        let mut v = create_vec(&code);
 
         let expect = Expr_::FuncApplication(FuncApplication(Term(Identifier("a".to_string()))));
 
-        let mut v = code.tokens.iter().collect();
         let actual = Expr_::new(&mut v).expect("failed to parse");
 
         assert_eq!(expect, actual);
@@ -509,6 +509,7 @@ mod tests {
     fn new_simple_expr_add() {
         let src = "1 + 2";
         let code = Code::from(src).expect("failed to tokenize");
+        let mut v = create_vec(&code);
 
         let expect = Expr_::FuncApplication(BinaryOpL {
             op: "+".to_string(),
@@ -516,7 +517,6 @@ mod tests {
             arg2: Box::new(FuncApplication(Term(Literal(NumericLiteral(2))))),
         });
 
-        let mut v = code.tokens.iter().collect();
         let actual = Expr_::new(&mut v).expect("failed to parse");
 
         assert_eq!(expect, actual);
@@ -525,11 +525,12 @@ mod tests {
     #[test]
     fn new_complex_expr() {
         let src = complex_expr_src();
-        let tokens = Code::from(src).expect("failed to tokenize").tokens;
+        let code = Code::from(src).expect("failed to tokenize");
+        let mut v = create_vec(&code);
 
         let expect: Expr_ = complex_expr();
 
-        let actual = Expr_::new(&mut tokens.iter().collect()).expect("failed to parse expr");
+        let actual = Expr_::new(&mut v).expect("failed to parse expr");
         assert_eq!(expect, actual);
     }
 
@@ -537,6 +538,7 @@ mod tests {
     fn new_simple_binary_op() {
         let src = "1 + 2";
         let code = Code::from(src).expect("failed to tokenize");
+        let mut v = create_vec(&code);
 
         let expect = BinaryOpL {
             op: "+".to_string(),
@@ -544,7 +546,6 @@ mod tests {
             arg2: Box::new(FuncApplication(Term(Literal(NumericLiteral(2))))),
         };
 
-        let mut v = code.tokens.iter().collect();
         let actual = FuncApplicationOp_::new(&mut v).expect("failed to parse");
 
         assert_eq!(expect, actual);
@@ -554,13 +555,13 @@ mod tests {
     fn new_simple_func_app() {
         let src = "f 1";
         let code = Code::from(src).expect("failed to tokenize");
+        let mut v = create_vec(&code);
 
         let expect = Normal {
             op: Box::new(Term_::Identifier("f".to_string())),
             args: vec![Literal(NumericLiteral(1))],
         };
 
-        let mut v = code.tokens.iter().collect();
         let actual = FuncApplication_::new(&mut v).expect("failed to parse");
 
         assert_eq!(expect, actual);
@@ -570,10 +571,10 @@ mod tests {
     fn new_simple_func_term() {
         let src = "1";
         let code = Code::from(src).expect("failed to tokenize");
+        let mut v = create_vec(&code);
 
         let expect = Term(Literal(NumericLiteral(1)));
 
-        let mut v = code.tokens.iter().collect();
         let actual = FuncApplication_::new(&mut v).expect("failed to parse");
 
         assert_eq!(expect, actual);
@@ -583,13 +584,13 @@ mod tests {
     fn new_complex_func_app() {
         let src = "f 1 2 3";
         let code = Code::from(src).expect("failed to tokenize");
+        let mut v = create_vec(&code);
 
         let expect = Normal {
             op: Box::new(Term_::Identifier("f".to_string())),
             args: vec![Literal(NumericLiteral(1)), Literal(NumericLiteral(2)), Literal(NumericLiteral(3))],
         };
 
-        let mut v = code.tokens.iter().collect();
         let actual = FuncApplication_::new(&mut v).expect("failed to parse");
 
         assert_eq!(expect, actual);
@@ -599,10 +600,10 @@ mod tests {
     fn new_simple_term() {
         let src = "1";
         let code = Code::from(src).expect("failed to tokenize");
+        let mut v = create_vec(&code);
 
         let expect = Literal(NumericLiteral(1));
 
-        let mut v = code.tokens.iter().collect();
         let actual = Term_::new(&mut v).expect("failed to parse");
 
         assert_eq!(expect, actual);
@@ -612,10 +613,10 @@ mod tests {
     fn new_simple_bracket_term() {
         let src = "(1)";
         let code = Code::from(src).expect("failed to tokenize");
+        let mut v = create_vec(&code);
 
         let expect = Term_::Expr(Box::new(Expr_::FuncApplication(FuncApplication(Term(Literal(NumericLiteral(1)))))));
 
-        let mut v = code.tokens.iter().collect();
         let actual = Term_::new(&mut v).expect("failed to parse");
 
         assert_eq!(expect, actual);
@@ -625,6 +626,7 @@ mod tests {
     fn new_complex_bracket_term() {
         let src = "(1 + 2)";
         let code = Code::from(src).expect("failed to tokenize");
+        let mut v = create_vec(&code);
 
         let expect = Term_::Expr(Box::new(Expr_::FuncApplication(BinaryOpL {
             op: "+".to_string(),
@@ -632,10 +634,13 @@ mod tests {
             arg2: Box::new(FuncApplication(Term(Literal(NumericLiteral(2))))),
         })));
 
-        let mut v = code.tokens.iter().collect();
         let actual = Term_::new(&mut v).expect("failed to parse");
 
         assert_eq!(expect, actual);
+    }
+
+    fn create_vec(code: &Code) -> Vec<&Token> {
+        code.iter().filter(|tk| tk.k != TK::WhiteSpace && tk.k != TK::Empty).collect()
     }
 
     fn complex_expr_src() -> &'static str {
