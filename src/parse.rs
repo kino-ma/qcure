@@ -425,6 +425,7 @@ impl std::fmt::Display for ParseError {
         match self {
             UnexpectedToken(t) => write!(f, "unexpected token: `{:?}`", t),
             UnexpectedCloseBracket => write!(f, "unexpected closing bracket"),
+            ExpectedCloseBracket => write!(f, "expected closing bracket"),
             UnexpectedEOF => write!(f, "unexpected EOF"),
             InvalidNumeric => write!(f, "invalid numeric literal"),
             CouldntParse {tk, as_} => write!(f, "couldn't parse {:?} as {:?}", tk, as_),
