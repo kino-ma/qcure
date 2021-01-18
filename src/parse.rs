@@ -196,6 +196,7 @@ impl FuncApplicationOp_ {
 
         let mut v2 = v.split_off(idx + 1);
 
+        debug!("v1: {:?}, v2: {:?}", v, v2);
         // assert poped item is symbol that we found above
         assert_eq!(min_op, v.pop().unwrap());
 
@@ -212,6 +213,31 @@ impl FuncApplicationOp_ {
             arg2
         })
     }
+}
+
+fn search_bin_op_l<'a>(v: &Vec<&'a Token>) -> Option<(usize, &'a Token)> {
+    let mut bracket_count = 0;
+    let mut idx = v.len() - 1;
+
+    for tk in v.iter().rev() {
+        if tk.k != TK::Symbol {
+            continue;
+        } else if tk.is(")") {
+            bracket_count += 1;
+        } else if tk.is("(") {
+            if bracket_count <= 0 {
+                return None;
+            }
+
+            bracket_count -= 1;
+        } else {
+            return Some((idx, tk));
+        }
+
+        idx -= 1;
+    }
+
+    None
 }
 
 #[derive(Debug, Eq, PartialEq, Clone)]
