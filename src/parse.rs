@@ -167,7 +167,10 @@ impl FuncApplicationOp_ {
                 arg
             })
         } else {
-            Err(CouldntParse)
+            Err(CouldntParse {
+                tk: v[0].clone(),
+                as_: "unary_op".to_string()
+            })
         }
     }
 
@@ -251,7 +254,10 @@ impl Term_ {
         let tk = tokens[0];
         match tk.k {
             TK::Numeric | TK::Identifier => Self::from(tokens.remove(0)),
-            _ => Err(CouldntParse)
+            _ => Err(CouldntParse {
+                tk: tk.clone(),
+                as_: "term".to_string()
+            })
         }
     }
 
@@ -264,7 +270,10 @@ impl Term_ {
                 .map(Literal)
                 .or(Err(InvalidNumeric)),
             TK::Identifier => Ok(Identifier(tk.t.clone())),
-            _ => Err(CouldntParse)
+            _ => Err(CouldntParse {
+                tk: tk.clone(),
+                as_: "term".to_string()
+            })
         }
     }
 
@@ -385,7 +394,7 @@ pub enum ParseError {
     UnexpectedCloseBracket,
     UnexpectedEOF,
     InvalidNumeric,
-    CouldntParse,
+    CouldntParse { tk: Token, as_: String }
 }
 use ParseError::*;
 
@@ -397,7 +406,7 @@ impl std::fmt::Display for ParseError {
             UnexpectedCloseBracket => write!(f, "unexpected closing bracket"),
             UnexpectedEOF => write!(f, "unexpected EOF"),
             InvalidNumeric => write!(f, "invalid numeric literal"),
-            CouldntParse => write!(f, "couldn't parse as such type"),
+            CouldntParse {tk, as_} => write!(f, "couldn't parse {:?} as {:?}", tk, as_),
         }
     }
 }
