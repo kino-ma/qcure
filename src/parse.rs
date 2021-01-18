@@ -642,7 +642,7 @@ mod tests {
     }
 
     fn setup(src: &str) -> Code {
-        env_logger::init();
+        let _ = env_logger::builder().is_test(true).try_init();
 
         Code::from(src).expect("failed to tokenize")
     }
