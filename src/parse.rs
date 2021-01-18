@@ -652,7 +652,7 @@ mod tests {
     }
 
     fn complex_expr_src() -> &'static str {
-        "f 1 + 2 * (-3 + 4)"
+        "f 1 + 2 * (3 + 4)"
     }
 
     fn complex_expr() -> Expr_ {
