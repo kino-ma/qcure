@@ -254,6 +254,7 @@ impl Term_ {
         let tk = tokens[0];
         match tk.k {
             TK::Numeric | TK::Identifier => Self::from(tokens.remove(0)),
+            TK::Symbol => Self::expr(tokens),
             _ => Err(CouldntParse {
                 tk: tk.clone(),
                 as_: "term".to_string()
@@ -275,6 +276,25 @@ impl Term_ {
                 as_: "term".to_string()
             })
         }
+    }
+
+    pub fn expr(tokens: &mut Vec<&Token>) -> Result<Self> {
+        let tk = tokens[0];
+        if !tk.is("(") {
+            return Err(CouldntParse {
+                tk: tk.clone(),
+                as_: "(".to_string()
+            })
+        }
+
+        tokens.remove(0);
+        let idx = tokens.iter()
+            .position(|tk| tk.is(")"))
+            .ok_or(ExpectedCloseBracket)?;
+        
+        let mut expr_tokens = tokens.drain(..=idx).collect();
+
+        Ok(Expr(Box::new(Expr_::new(&mut expr_tokens)?)))
     }
 
     pub fn prior(&self) -> usize {
@@ -392,6 +412,7 @@ type Result<T> = std::result::Result<T, ParseError>;
 pub enum ParseError {
     UnexpectedToken(Token),
     UnexpectedCloseBracket,
+    ExpectedCloseBracket,
     UnexpectedEOF,
     InvalidNumeric,
     CouldntParse { tk: Token, as_: String }
