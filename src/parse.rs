@@ -216,28 +216,29 @@ impl FuncApplicationOp_ {
 fn search_bin_op_l<'a>(v: &Vec<&'a Token>) -> Option<(usize, &'a Token)> {
     debug!("search_bin_op_l({:?})", v);
     let mut bracket_count = 0;
-    let mut idx = v.len() - 1;
+    let mut idx = 0;
     let mut op_stack = Vec::new();
 
-    for tk in v.iter().rev() {
+    for tk in v.iter() {
         if tk.k != TK::Symbol {
-            continue;
-        } else if tk.is(")") {
-            bracket_count += 1;
+            // pass
         } else if tk.is("(") {
+            bracket_count += 1;
+        } else if tk.is(")") {
             if bracket_count <= 0 {
                 return None;
             }
 
             bracket_count -= 1;
-        } else {
+        } else if bracket_count == 0 {
             op_stack.push((idx, *tk));
         }
 
-        idx -= 1;
+        idx += 1;
     }
 
     let res = op_stack.iter()
+        .rev()
         .min_by_key(|(_, tk)| priority(tk))
         .map(|x| *x);
     debug!("searched: {:?}", res);
