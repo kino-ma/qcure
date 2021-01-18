@@ -8,6 +8,7 @@ pub struct Program {
 
 impl Program {
     pub fn new(code: Code) -> Result<Self> {
+        println!("Program::new({:?})", code);
         let mut v = code.tokens.iter()
             .filter(|t| t.k != TK::WhiteSpace && t.k != TK::Empty)
             .map(|t| t)
@@ -47,7 +48,7 @@ fn expect<'a, I: std::iter::Iterator<Item = &'a Token>>(it: &mut I, kind: Option
 
 fn priority(tk: &Token) -> usize {
     match &tk.k {
-        Symbol => match &tk.t[..] {
+        TK::Symbol => match &tk.t[..] {
             "*" | "/" | "%" => 7,
             "+" | "-" => 6,
             "&&" => 3,
@@ -66,12 +67,13 @@ pub enum Statement {
 
 impl Statement {
     pub fn new(v: &mut Vec<&Token>) -> Result<Self> {
+        println!("Statement::new({:?})", v);
         let p = v.iter()
             .position(|t| t.is(";"))
             .unwrap_or(v.len() - 1);
 
         let mut tokens: Vec<&Token> = v.drain(..=p).collect();
-        tokens.pop();
+        println!("tokens: {:?}", tokens);
 
         Self::assign(&tokens)
             // .or(Self::definition(&tokens))
@@ -87,6 +89,7 @@ impl Statement {
         let ident;
         let expr;
 
+        println!("it: {:?}", it);
         t = expect(&mut it, Some(TK::Identifier), None)?;
 
         prefix = if t.is("public") || t.is("exported") {
@@ -98,8 +101,10 @@ impl Statement {
 
         ident = t.t.clone();
 
+        println!("it: {:?}", it);
         expect(&mut it, Some(TK::Symbol), Some(":="))?;
 
+        println!("it: {:?}", it);
         expr = Expr_::new(&mut it.collect())?;
 
         Ok(Self::Assign{
@@ -123,6 +128,7 @@ pub enum Expr_ {
 
 impl Expr_ {
     pub fn new(v: &mut Vec<&Token>) -> Result<Self> {
+        println!("Expr_::new({:?})", v);
         let expr = Self::func_app(v)?;
             // .or(Self::bind(v));
             // ...
@@ -147,6 +153,7 @@ use FuncApplicationOp_::*;
 
 impl FuncApplicationOp_ {
     pub fn new(v: &mut Vec<&Token>) -> Result<Self> {
+        println!("FuncApplicationOp_::new({:?})", v);
         Self::app(v)
             .or(Self::unary_op(v))
             .or(Self::binary_op_l(v))
@@ -216,7 +223,7 @@ type BinaryOpR_ = String;
 
 impl FuncApplication_ {
     pub fn new(v: &mut Vec<&Token>) -> Result<Self> {
-        println!("FuncApplication_::new()");
+        println!("FuncApplication_::new({:?})", v);
         let first = Term_::new(v)?;
         v.reverse();
 
@@ -255,7 +262,7 @@ use Term_::*;
 
 impl Term_ {
     pub fn new(tokens: &mut Vec<&Token>) -> Result<Self> {
-        println!("Term_::new()");
+        println!("Term_::new({:?})", tokens);
         let tk = expect(&mut tokens.iter().map(|t| *t), None, None)?;
         match tk.k {
             TK::Numeric | TK::Identifier => Self::from(tokens.remove(0)),
@@ -465,6 +472,7 @@ mod tests {
 
 
         let expr = Expr_::new(&mut vec![&Token::new("1".to_string(), TK::Numeric)]).unwrap();
+        println!("expr done");
         let expect = Statement::Assign { prefix: None, ident: "hoge".to_string(), expr };
         let actual = Statement::new(&mut iter.collect()).unwrap();
 
