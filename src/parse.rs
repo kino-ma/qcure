@@ -8,12 +8,15 @@ pub struct Program {
 
 impl Program {
     pub fn new(code: Code) -> Result<Self> {
-        let mut iter = code.iter();
+        let mut v = code.tokens.iter()
+            .filter(|t| t.k != TK::WhiteSpace && t.k != TK::Empty)
+            .map(|t| t)
+            .collect();
         let mut stmts = Vec::new();
 
         // loop
         {
-            let stmt = Statement::new(&mut iter)?;
+            let stmt = Statement::new(&mut v)?;
             stmts.push(stmt);
         }
 
@@ -62,16 +65,13 @@ pub enum Statement {
 }
 
 impl Statement {
-    pub fn new(iter: &mut TokenIter) -> Result<Self> {
-        let mut tokens = Vec::new();
+    pub fn new(v: &mut Vec<&Token>) -> Result<Self> {
+        let p = v.iter()
+            .position(|t| t.is(";"))
+            .unwrap_or(v.len() - 1);
 
-        for t in iter {
-            if t.is(";") {
-                break;
-            }
-
-            tokens.push(t);
-        }
+        let mut tokens: Vec<&Token> = v.drain(..=p).collect();
+        tokens.pop();
 
         Self::assign(&tokens)
             // .or(Self::definition(&tokens))
@@ -80,8 +80,7 @@ impl Statement {
 
     pub fn assign(tokens: &Vec<&Token>) -> Result<Self> {
         let mut it = tokens.iter()
-            .filter(|t| t.k != TK::WhiteSpace && t.k != TK::Empty)
-            .map(|t| t.clone());
+            .map(|t| *t);
         let mut t;
 
         let prefix;
@@ -209,6 +208,7 @@ type BinaryOpR_ = String;
 
 impl FuncApplication_ {
     pub fn new(v: &mut Vec<&Token>) -> Result<Self> {
+        println!("FuncApplication_::new()");
         let first = Term_::new(v)?;
         v.reverse();
 
@@ -247,19 +247,16 @@ use Term_::*;
 
 impl Term_ {
     pub fn new(tokens: &mut Vec<&Token>) -> Result<Self> {
+        println!("Term_::new()");
         let tk = tokens[0];
         match tk.k {
-            TK::Numeric => tokens.remove(0).t
-                .parse::<Num>()
-                .map(NumericLiteral)
-                .map(Literal)
-                .or(Err(InvalidNumeric)),
-            TK::Identifier => Ok(Identifier(tokens.remove(0).t.clone())),
+            TK::Numeric | TK::Identifier => Self::from(tokens.remove(0)),
             _ => Err(CouldntParse)
         }
     }
 
     pub fn from(tk: &Token) -> Result<Self> {
+        println!("Term_::from({:?})", tk);
         match tk.k {
             TK::Numeric => tk.t
                 .parse::<Num>()
@@ -425,11 +422,9 @@ mod tests {
         let src = "hoge := 1";
         let code = Code::from(src).expect("failed to tokenize");
 
-        let mut iter = code.iter();
-
         let expr = Expr_::new(&mut vec![&Token::new("1".to_string(), TK::Numeric)]).unwrap();
         let expect = Statement::Assign { prefix: None, ident: "hoge".to_string(), expr };
-        let actual = Statement::new(&mut iter).unwrap();
+        let actual = Statement::new(&mut code.iter().collect()).unwrap();
 
         assert_eq!(expect, actual);
     }
