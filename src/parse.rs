@@ -190,9 +190,7 @@ impl FuncApplicationOp_ {
 
     pub fn binary_op_l(v: &mut Vec<&Token>) -> Result<Self> {
         debug!("FuncApplicationOp_::binary_op_l({:?})", v);
-        let it = v.iter().rev().filter(|tk| tk.k == TK::Symbol && !(tk.is("(") || tk.is(")")));
-        let min_op = it.min_by_key(|t| priority(t)).ok_or(UnexpectedEOF)?.clone();
-        let idx = v.iter().rev().rposition(|t| t == &min_op).unwrap();
+        let (idx, min_op) = search_bin_op_l(v).ok_or(CouldntFindOperator)?;
 
         let mut v2 = v.split_off(idx + 1);
 
@@ -467,6 +465,7 @@ pub enum ParseError {
     ExpectedCloseBracket,
     UnexpectedEOF,
     InvalidNumeric,
+    CouldntFindOperator,
     CouldntParse { tk: Token, as_: String }
 }
 use ParseError::*;
@@ -480,6 +479,7 @@ impl std::fmt::Display for ParseError {
             ExpectedCloseBracket => write!(f, "expected closing bracket"),
             UnexpectedEOF => write!(f, "unexpected EOF"),
             InvalidNumeric => write!(f, "invalid numeric literal"),
+            CouldntFindOperator => write!(f, "couldn't find an operator"),
             CouldntParse {tk, as_} => write!(f, "couldn't parse {:?} as {:?}", tk, as_),
         }
     }
