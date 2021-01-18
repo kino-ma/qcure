@@ -667,6 +667,24 @@ mod tests {
         assert_eq!(expect, actual);
     }
 
+    #[test]
+    fn should_search_bin_op_l() {
+        let src = "f 1 2 + 3 * (4 - 5)";
+        let code = setup(src);
+        let v = create_vec(&code);
+
+        let expect_idx = 6;
+        let expect_tk = &Token {
+            t: "+".to_string(),
+            k: TK::Symbol
+        };
+
+        let (idx, tk) = search_bin_op_l(&v).expect("failed to search");
+
+        assert_eq!(expect_idx, idx);
+        assert_eq!(expect_tk, tk);
+    }
+
     fn setup(src: &str) -> Code {
         let _ = env_logger::builder().is_test(true).try_init();
 
