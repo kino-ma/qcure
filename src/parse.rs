@@ -680,16 +680,16 @@ mod tests {
         let code = setup(src);
         let v = create_vec(&code);
 
-        let expect_idx = 6;
+        let expect_idx = 3;
         let expect_tk = &Token {
             t: "+".to_string(),
             k: TK::Symbol
         };
+        let expect = (expect_idx, expect_tk);
 
-        let (idx, tk) = search_bin_op_l(&v).expect("failed to search");
+        let actual = search_bin_op_l(&v).expect("failed to search");
 
-        assert_eq!(expect_idx, idx);
-        assert_eq!(expect_tk, tk);
+        assert_eq!(expect, actual);
     }
 
     fn setup(src: &str) -> Code {
