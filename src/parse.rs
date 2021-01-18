@@ -239,7 +239,6 @@ impl FuncApplication_ {
             }
         }
         v.reverse();
-        args.reverse();
 
         return Ok(
             match args.len() {
