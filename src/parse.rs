@@ -216,6 +216,7 @@ impl FuncApplicationOp_ {
 }
 
 fn search_bin_op_l<'a>(v: &Vec<&'a Token>) -> Option<(usize, &'a Token)> {
+    debug!("search_bin_op_l({:?})", v);
     let mut bracket_count = 0;
     let mut idx = v.len() - 1;
     let mut op_stack = Vec::new();
@@ -238,9 +239,12 @@ fn search_bin_op_l<'a>(v: &Vec<&'a Token>) -> Option<(usize, &'a Token)> {
         idx -= 1;
     }
 
-    op_stack.iter()
+    let res = op_stack.iter()
         .min_by_key(|(_, tk)| priority(tk))
-        .map(|x| *x)
+        .map(|x| *x);
+    debug!("searched: {:?}", res);
+
+    res
 }
 
 #[derive(Debug, Eq, PartialEq, Clone)]
