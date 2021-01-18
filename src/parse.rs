@@ -154,18 +154,20 @@ use FuncApplicationOp_::*;
 impl FuncApplicationOp_ {
     pub fn new(v: &mut Vec<&Token>) -> Result<Self> {
         println!("FuncApplicationOp_::new({:?})", v);
-        Self::app(v)
-            .or(Self::unary_op(v))
+        Self::unary_op(v)
             .or(Self::binary_op_l(v))
+            .or(Self::app(v))
             //.or(Self::binary_op_r(v))
     }
 
     pub fn app(v: &mut Vec<&Token>) -> Result<Self> {
+        println!("FuncApplicationOp_::app({:?})", v);
         FuncApplication_::new(v)
             .map(FuncApplication)
     }
 
     pub fn unary_op(v: &mut Vec<&Token>) -> Result<Self> {
+        println!("FuncApplicationOp_::unary_op({:?})", v);
         match expect(&mut v.iter().map(|t| *t), Some(TK::Symbol), None) {
             Ok(_) => {
                 let arg = Box::new(FuncApplication_::new(v)?);
@@ -187,14 +189,16 @@ impl FuncApplicationOp_ {
     }
 
     pub fn binary_op_l(v: &mut Vec<&Token>) -> Result<Self> {
-        let it = v.iter().rev();
+        println!("FuncApplicationOp_::binary_op_l({:?})", v);
+        let it = v.iter().rev().filter(|tk| tk.k == TK::Symbol);
         let min_op = it.min_by_key(|t| priority(t)).ok_or(UnexpectedEOF)?.clone();
         let idx = v.iter().rev().rposition(|t| t == &min_op).unwrap();
 
-        // assert poped item is symbol that we found above
-        assert_eq!(v.pop().unwrap(), min_op);
+        let mut v2 = v.split_off(idx + 1);
 
-        let mut v2 = v.split_off(idx - 1);
+        // assert poped item is symbol that we found above
+        assert_eq!(min_op, v.pop().unwrap());
+
         let lhs = FuncApplicationOp_::new(v)?;
         let rhs = FuncApplicationOp_::new(&mut v2)?;
 
