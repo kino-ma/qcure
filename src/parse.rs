@@ -8,7 +8,7 @@ pub struct Program {
 
 impl Program {
     pub fn new(code: Code) -> Result<Self> {
-        println!("Program::new({:?})", code);
+        debug!("Program::new({:?})", code);
         let mut v = code.tokens.iter()
             .filter(|t| t.k != TK::WhiteSpace && t.k != TK::Empty)
             .map(|t| t)
@@ -67,13 +67,13 @@ pub enum Statement {
 
 impl Statement {
     pub fn new(v: &mut Vec<&Token>) -> Result<Self> {
-        println!("Statement::new({:?})", v);
+        debug!("Statement::new({:?})", v);
         let p = v.iter()
             .position(|t| t.is(";"))
             .unwrap_or(v.len() - 1);
 
         let mut tokens: Vec<&Token> = v.drain(..=p).collect();
-        println!("tokens: {:?}", tokens);
+        debug!("tokens: {:?}", tokens);
 
         Self::assign(&tokens)
             // .or(Self::definition(&tokens))
@@ -89,7 +89,7 @@ impl Statement {
         let ident;
         let expr;
 
-        println!("it: {:?}", it);
+        debug!("it: {:?}", it);
         t = expect(&mut it, Some(TK::Identifier), None)?;
 
         prefix = if t.is("public") || t.is("exported") {
@@ -101,10 +101,10 @@ impl Statement {
 
         ident = t.t.clone();
 
-        println!("it: {:?}", it);
+        debug!("it: {:?}", it);
         expect(&mut it, Some(TK::Symbol), Some(":="))?;
 
-        println!("it: {:?}", it);
+        debug!("it: {:?}", it);
         expr = Expr_::new(&mut it.collect())?;
 
         Ok(Self::Assign{
@@ -128,7 +128,7 @@ pub enum Expr_ {
 
 impl Expr_ {
     pub fn new(v: &mut Vec<&Token>) -> Result<Self> {
-        println!("Expr_::new({:?})", v);
+        debug!("Expr_::new({:?})", v);
         let expr = Self::func_app(v)?;
             // .or(Self::bind(v));
             // ...
@@ -153,7 +153,7 @@ use FuncApplicationOp_::*;
 
 impl FuncApplicationOp_ {
     pub fn new(v: &mut Vec<&Token>) -> Result<Self> {
-        println!("FuncApplicationOp_::new({:?})", v);
+        debug!("FuncApplicationOp_::new({:?})", v);
         Self::unary_op(v)
             .or(Self::binary_op_l(v))
             .or(Self::app(v))
@@ -161,13 +161,13 @@ impl FuncApplicationOp_ {
     }
 
     pub fn app(v: &mut Vec<&Token>) -> Result<Self> {
-        println!("FuncApplicationOp_::app({:?})", v);
+        debug!("FuncApplicationOp_::app({:?})", v);
         FuncApplication_::new(v)
             .map(FuncApplication)
     }
 
     pub fn unary_op(v: &mut Vec<&Token>) -> Result<Self> {
-        println!("FuncApplicationOp_::unary_op({:?})", v);
+        debug!("FuncApplicationOp_::unary_op({:?})", v);
         match expect(&mut v.iter().map(|t| *t), Some(TK::Symbol), None) {
             Ok(_) => {
                 let arg = Box::new(FuncApplication_::new(v)?);
@@ -189,7 +189,7 @@ impl FuncApplicationOp_ {
     }
 
     pub fn binary_op_l(v: &mut Vec<&Token>) -> Result<Self> {
-        println!("FuncApplicationOp_::binary_op_l({:?})", v);
+        debug!("FuncApplicationOp_::binary_op_l({:?})", v);
         let it = v.iter().rev().filter(|tk| tk.k == TK::Symbol);
         let min_op = it.min_by_key(|t| priority(t)).ok_or(UnexpectedEOF)?.clone();
         let idx = v.iter().rev().rposition(|t| t == &min_op).unwrap();
@@ -227,7 +227,7 @@ type BinaryOpR_ = String;
 
 impl FuncApplication_ {
     pub fn new(v: &mut Vec<&Token>) -> Result<Self> {
-        println!("FuncApplication_::new({:?})", v);
+        debug!("FuncApplication_::new({:?})", v);
         let first = Term_::new(v)?;
         v.reverse();
 
@@ -266,7 +266,7 @@ use Term_::*;
 
 impl Term_ {
     pub fn new(tokens: &mut Vec<&Token>) -> Result<Self> {
-        println!("Term_::new({:?})", tokens);
+        debug!("Term_::new({:?})", tokens);
         let tk = expect(&mut tokens.iter().map(|t| *t), None, None)?;
         match tk.k {
             TK::Numeric | TK::Identifier => Self::from(tokens.remove(0)),
@@ -279,7 +279,7 @@ impl Term_ {
     }
 
     pub fn from(tk: &Token) -> Result<Self> {
-        println!("Term_::from({:?})", tk);
+        debug!("Term_::from({:?})", tk);
         match tk.k {
             TK::Numeric => tk.t
                 .parse::<Num>()
@@ -476,7 +476,7 @@ mod tests {
 
 
         let expr = Expr_::new(&mut vec![&Token::new("1".to_string(), TK::Numeric)]).unwrap();
-        println!("expr done");
+        debug!("expr done");
         let expect = Statement::Assign { prefix: None, ident: "hoge".to_string(), expr };
         let actual = Statement::new(&mut v).unwrap();
 
