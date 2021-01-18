@@ -256,7 +256,7 @@ use Term_::*;
 impl Term_ {
     pub fn new(tokens: &mut Vec<&Token>) -> Result<Self> {
         println!("Term_::new()");
-        let tk = tokens[0];
+        let tk = expect(&mut tokens.iter().map(|t| *t), None, None)?;
         match tk.k {
             TK::Numeric | TK::Identifier => Self::from(tokens.remove(0)),
             TK::Symbol => Self::expr(tokens),
@@ -461,10 +461,12 @@ mod tests {
     fn new_statement() {
         let src = "hoge := 1";
         let code = Code::from(src).expect("failed to tokenize");
+        let iter = code.iter().filter(|tk| tk.k != TK::WhiteSpace && tk.k != TK::Empty);
+
 
         let expr = Expr_::new(&mut vec![&Token::new("1".to_string(), TK::Numeric)]).unwrap();
         let expect = Statement::Assign { prefix: None, ident: "hoge".to_string(), expr };
-        let actual = Statement::new(&mut code.iter().collect()).unwrap();
+        let actual = Statement::new(&mut iter.collect()).unwrap();
 
         assert_eq!(expect, actual);
     }
