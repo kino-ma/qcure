@@ -159,18 +159,23 @@ impl FuncApplicationOp_ {
     }
 
     pub fn unary_op(v: &mut Vec<&Token>) -> Result<Self> {
-        if expect(&mut v.iter().map(|t| t.clone()), Some(TK::Symbol), None).is_ok() {
-            let arg = Box::new(FuncApplication_::new(v)?);
-            let op = v.remove(0).t.clone();
-            Ok(Self::UnaryOp {
-                op,
-                arg
-            })
-        } else {
-            Err(CouldntParse {
-                tk: v[0].clone(),
-                as_: "unary_op".to_string()
-            })
+        match expect(&mut v.iter().map(|t| *t), Some(TK::Symbol), None) {
+            Ok(_) => {
+                let arg = Box::new(FuncApplication_::new(v)?);
+                let op = v.remove(0).t.clone();
+                Ok(Self::UnaryOp {
+                    op,
+                    arg
+                })
+            },
+            Err(UnexpectedEOF) => Err(UnexpectedEOF),
+            Err(_) => {
+                Err(CouldntParse {
+                    // out of bound
+                    tk: v[0].clone(),
+                    as_: "unary_op".to_string()
+                })
+            }
         }
     }
 
@@ -287,12 +292,16 @@ impl Term_ {
             })
         }
 
+        // opening bracket
         tokens.remove(0);
         let idx = tokens.iter()
             .position(|tk| tk.is(")"))
             .ok_or(ExpectedCloseBracket)?;
         
-        let mut expr_tokens = tokens.drain(..=idx).collect();
+        let mut expr_tokens: Vec<&Token> = tokens.drain(..=idx).collect();
+
+        // closing bracket
+        expr_tokens.pop();
 
         Ok(Expr(Box::new(Expr_::new(&mut expr_tokens)?)))
     }
