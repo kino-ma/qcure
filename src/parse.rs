@@ -218,6 +218,7 @@ impl FuncApplicationOp_ {
 fn search_bin_op_l<'a>(v: &Vec<&'a Token>) -> Option<(usize, &'a Token)> {
     let mut bracket_count = 0;
     let mut idx = v.len() - 1;
+    let mut op_stack = Vec::new();
 
     for tk in v.iter().rev() {
         if tk.k != TK::Symbol {
@@ -231,13 +232,15 @@ fn search_bin_op_l<'a>(v: &Vec<&'a Token>) -> Option<(usize, &'a Token)> {
 
             bracket_count -= 1;
         } else {
-            return Some((idx, tk));
+            op_stack.push((idx, *tk));
         }
 
         idx -= 1;
     }
 
-    None
+    op_stack.iter()
+        .min_by_key(|(_, tk)| priority(tk))
+        .map(|x| *x)
 }
 
 #[derive(Debug, Eq, PartialEq, Clone)]
