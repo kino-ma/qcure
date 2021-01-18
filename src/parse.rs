@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use crate::token::{Code, Token, TokenKind as TK, TokenIter};
+use crate::token::{Code, Token, TokenKind as TK};
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub struct Program {
@@ -72,7 +72,7 @@ impl Statement {
             .position(|t| t.is(";"))
             .unwrap_or(v.len() - 1);
 
-        let mut tokens: Vec<&Token> = v.drain(..=p).collect();
+        let tokens: Vec<&Token> = v.drain(..=p).collect();
         debug!("tokens: {:?}", tokens);
 
         Self::assign(&tokens)

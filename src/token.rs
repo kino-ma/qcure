@@ -274,7 +274,7 @@ mod tests {
 
     #[test]
     fn iter_tokens() {
-        let code = r#"hoge fuga
+        let _code = r#"hoge fuga
         123piyo  a"#;
 
         let arr = [("hoge", Identifier), (" ", WhiteSpace), ("fuga", Identifier), ("\n        ", WhiteSpace), ("123", Numeric), ("piyo", Identifier), ("  ", WhiteSpace), ("a", Identifier)];
