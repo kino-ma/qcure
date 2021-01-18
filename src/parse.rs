@@ -190,7 +190,7 @@ impl FuncApplicationOp_ {
 
     pub fn binary_op_l(v: &mut Vec<&Token>) -> Result<Self> {
         debug!("FuncApplicationOp_::binary_op_l({:?})", v);
-        let it = v.iter().rev().filter(|tk| tk.k == TK::Symbol);
+        let it = v.iter().rev().filter(|tk| tk.k == TK::Symbol && !(tk.is("(") || tk.is(")")));
         let min_op = it.min_by_key(|t| priority(t)).ok_or(UnexpectedEOF)?.clone();
         let idx = v.iter().rev().rposition(|t| t == &min_op).unwrap();
 
