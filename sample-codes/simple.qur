@@ -72,7 +72,7 @@ switch q proc := {
     q' :=
         -- exit status is empty, that means the process has not exited yet
         if proc.code == Empty then
-            q.reque proc
+            q.enque proc
         else
             q
 
