@@ -180,8 +180,11 @@ impl FuncApplicationOp_ {
         match expect(&mut v.iter().map(|t| *t), Some(TK::Symbol), None) {
             Ok(_) => {
                 debug!("unary_op: symbol");
-                let arg = Box::new(FuncApplication_::new(v)?);
+                if v.is_empty() {
+                    debug!("empty vec with unary_op");
+                }
                 let op = v.remove(0).t.clone();
+                let arg = Box::new(FuncApplication_::new(v)?);
                 Ok(Self::UnaryOp {
                     op,
                     arg
@@ -347,6 +350,7 @@ impl Term_ {
         }
 
         // opening bracket
+        debug!("expr: try remove{:?}", tokens);
         tokens.remove(0);
         let idx = tokens.iter()
             .position(|tk| tk.is(")"))
