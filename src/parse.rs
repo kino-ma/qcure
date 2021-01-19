@@ -739,6 +739,24 @@ mod tests {
         assert_eq!(expect, actual);
     }
 
+    #[test]
+    fn should_search_close_bracket() {
+        let src = "f 1 (2 + 3 * (4 - 5) / 6)";
+        let code = setup(src);
+        let v = create_vec(&code);
+
+        let expect_idx = 14;
+        let expect_tk = &Token {
+            t: ")".to_string(),
+            k: TK::Symbol
+        };
+        let expect = (expect_idx, expect_tk);
+
+        let actual = search_correspond_closing_brackets(&v).expect("failed to search");
+
+        assert_eq!(expect, actual);
+    }
+
     fn setup(src: &str) -> Code {
         let _ = env_logger::builder().is_test(true).try_init();
 
