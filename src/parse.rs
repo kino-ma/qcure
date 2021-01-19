@@ -1,4 +1,8 @@
 use std::collections::HashMap;
+use std::borrow::Borrow;
+use std::fmt::Debug;
+use std::iter::Iterator;
+
 use crate::token::{Code, Token, TokenKind as TK};
 
 #[derive(Debug, Eq, PartialEq, Clone)]
@@ -26,17 +30,23 @@ impl Program {
     }
 }
 
-fn expect<'a, I: std::iter::Iterator<Item = &'a Token> + Clone>(it: &mut I, kind: Option<TK>, s: Option<&str>) -> Result<&'a Token> {
+fn expect<'a, T, I>(it: &mut I, kind: Option<TK>, s: Option<&str>) -> Result<&'a Token>
+    where
+        T: Debug + Borrow<&'a Token>,
+        I: Iterator<Item = T> + Clone,
+{
     debug!("expect(");
     debug!("\t{:?},", it.clone().collect::<Vec<_>>());
     debug!("\t{:?},", kind);
     debug!("\t{:?},", s);
     debug!(")");
 
-    let t = it.next().ok_or({
-        debug!("expected some token");
-        UnexpectedEOF
-    })?;
+    let t = it.next()
+        .ok_or({
+            debug!("expected some token");
+            UnexpectedEOF
+        })?
+        .borrow() as &Token;
 
     if let Some(kind) = kind {
         if t.k != kind {
