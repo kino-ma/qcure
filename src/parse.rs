@@ -188,11 +188,19 @@ impl FuncApplicationOp_ {
     pub fn unary_op(v: &mut Vec<&Token>) -> Result<Self> {
         debug!("FuncApplicationOp_::unary_op({:?})", v);
         match expect(&mut v.iter().map(|t| *t), Some(TK::Symbol), None) {
-            Ok(_) => {
+            Ok(tk) => {
                 debug!("unary_op: symbol");
                 if v.is_empty() {
                     debug!("empty vec with unary_op");
                 }
+
+                if tk.is("(") || tk.is(")") {
+                    return Err(CouldntParse {
+                        tk: tk.clone(),
+                        as_: "unnary op".to_string()
+                    })
+                }
+
                 let op = v.remove(0).t.clone();
                 let arg = Box::new(FuncApplication_::new(v)?);
                 Ok(Self::UnaryOp {
@@ -284,17 +292,14 @@ type BinaryOpR_ = String;
 impl FuncApplication_ {
     pub fn new(v: &mut Vec<&Token>) -> Result<Self> {
         debug!("FuncApplication_::new({:?})", v);
+
         let first = Term_::new(v)?;
-        v.reverse();
 
         let mut args = Vec::new();
-        while let Some(tk) = v.pop() {
-            match Term_::from(tk) {
-                Ok(tk) => args.push(tk),
-                Err(_) => v.push(tk),
-            }
+
+        while let Ok(arg) = Term_::new(v) {
+            args.push(arg);
         }
-        v.reverse();
 
         return Ok(
             match args.len() {
