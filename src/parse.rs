@@ -360,11 +360,25 @@ impl Term_ {
         }
 
         // opening bracket
-        debug!("expr: try remove{:?}", tokens);
+        expect(&mut tokens.iter(), Some(TK::Symbol), Some("("))?;
         tokens.remove(0);
-        let idx = tokens.iter()
-            .position(|tk| tk.is(")"))
-            .ok_or(ExpectedCloseBracket)?;
+
+        let mut it = tokens.iter();
+        let mut idx = 0;
+        let mut count = 0;
+        loop {
+            match expect(&mut it, Some(TK::Symbol), Some(")")) {
+                Ok(_) => if count <= 0 {
+                    break;
+                } else {
+                    count += 1;
+                },
+                Err(UnexpectedEOF) => Err(ExpectedCloseBracket)?,
+                Err(UnexpectedToken(_)) => continue,
+                e@Err(_) => e.and(Ok(()))?
+            }
+            idx += 1;
+        }
         
         let mut expr_tokens: Vec<&Token> = tokens.drain(..=idx).collect();
 
