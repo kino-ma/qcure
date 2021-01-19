@@ -284,7 +284,7 @@ type BinaryOpR_ = String;
 impl FuncApplication_ {
     pub fn new(v: &mut Vec<&Token>) -> Result<Self> {
         debug!("FuncApplication_::new({:?})", v);
-        let first = Term_::new(v)?;
+        let first = Term_::identifier(v)?;
         v.reverse();
 
         let mut args = Vec::new();
@@ -347,6 +347,13 @@ impl Term_ {
                 as_: "term".to_string()
             })
         }
+    }
+
+    pub fn identifier(v: &mut Vec<&Token>) -> Result<Self> {
+        debug!("Term_::identifier({:?})", v);
+
+        expect(&mut v.iter(), Some(TK::Identifier), None)
+            .and_then(|tk| Self::from(tk))
     }
 
     pub fn expr(tokens: &mut Vec<&Token>) -> Result<Self> {
