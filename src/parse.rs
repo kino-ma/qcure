@@ -26,7 +26,13 @@ impl Program {
     }
 }
 
-fn expect<'a, I: std::iter::Iterator<Item = &'a Token>>(it: &mut I, kind: Option<TK>, s: Option<&str>) -> Result<&'a Token> {
+fn expect<'a, I: std::iter::Iterator<Item = &'a Token> + Clone>(it: &mut I, kind: Option<TK>, s: Option<&str>) -> Result<&'a Token> {
+    debug!("expect(");
+    debug!("\t{:?},", it.clone().collect::<Vec<_>>());
+    debug!("\t{:?},", kind);
+    debug!("\t{:?},", s);
+    debug!(")");
+
     let t = it.next().ok_or(UnexpectedEOF)?;
 
     if let Some(kind) = kind {
