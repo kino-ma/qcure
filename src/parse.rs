@@ -33,7 +33,10 @@ fn expect<'a, I: std::iter::Iterator<Item = &'a Token> + Clone>(it: &mut I, kind
     debug!("\t{:?},", s);
     debug!(")");
 
-    let t = it.next().ok_or(UnexpectedEOF)?;
+    let t = it.next().ok_or({
+        debug!("expected some token");
+        UnexpectedEOF
+    })?;
 
     if let Some(kind) = kind {
         if t.k != kind {
@@ -176,6 +179,7 @@ impl FuncApplicationOp_ {
         debug!("FuncApplicationOp_::unary_op({:?})", v);
         match expect(&mut v.iter().map(|t| *t), Some(TK::Symbol), None) {
             Ok(_) => {
+                debug!("unary_op: symbol");
                 let arg = Box::new(FuncApplication_::new(v)?);
                 let op = v.remove(0).t.clone();
                 Ok(Self::UnaryOp {
@@ -185,6 +189,7 @@ impl FuncApplicationOp_ {
             },
             Err(UnexpectedEOF) => Err(UnexpectedEOF),
             Err(_) => {
+                debug!("unary_op: err");
                 Err(CouldntParse {
                     // out of bound
                     tk: v[0].clone(),
@@ -332,6 +337,7 @@ impl Term_ {
     }
 
     pub fn expr(tokens: &mut Vec<&Token>) -> Result<Self> {
+        debug!("Term_::expr({:?})", tokens);
         let tk = tokens[0];
         if !tk.is("(") {
             return Err(CouldntParse {
@@ -355,6 +361,7 @@ impl Term_ {
     }
 
     pub fn prior(&self) -> usize {
+        debug!("Term_::prior({:?})", self);
         match self {
             Literal(_) => 10,
             Identifier(_) => 9,
