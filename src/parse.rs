@@ -363,23 +363,8 @@ impl Term_ {
         expect(&mut tokens.iter(), Some(TK::Symbol), Some("("))?;
         tokens.remove(0);
 
-        let mut it = tokens.iter();
-        let mut idx = 0;
-        let mut count = 0;
-        loop {
-            match expect(&mut it, Some(TK::Symbol), Some(")")) {
-                Ok(_) => if count <= 0 {
-                    break;
-                } else {
-                    count += 1;
-                },
-                Err(UnexpectedEOF) => Err(ExpectedCloseBracket)?,
-                Err(UnexpectedToken(_)) => continue,
-                e@Err(_) => e.and(Ok(()))?
-            }
-            idx += 1;
-        }
-        
+        let (idx, _) = search_correspond_closing_brackets(tokens)
+            .ok_or(ExpectedCloseBracket)?;
         let mut expr_tokens: Vec<&Token> = tokens.drain(..=idx).collect();
 
         // closing bracket
@@ -402,6 +387,26 @@ impl Term_ {
             },*/
             _ => 10
         }
+    }
+}
+
+fn search_correspond_closing_brackets<'a>(v: &Vec<&'a Token>) -> Option<(usize, &'a Token)> {
+    let mut it = v.iter();
+    let mut idx = 0;
+    let mut count = 0;
+
+    loop {
+        match expect(&mut it, Some(TK::Symbol), Some(")")) {
+            Ok(_) => if count <= 0 {
+                break None
+            } else {
+                count += 1;
+            },
+            Err(UnexpectedEOF) => break None,
+            Err(UnexpectedToken(_)) => (),
+            e@Err(_) => break None
+        }
+        idx += 1;
     }
 }
 
