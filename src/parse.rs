@@ -397,13 +397,15 @@ fn search_correspond_closing_brackets<'a>(v: &Vec<&'a Token>) -> Option<(usize, 
 
     loop {
         match expect(&mut it, Some(TK::Symbol), Some(")")) {
-            Ok(tk) => if count <= 0 {
+            Ok(tk) => if count == 1 {
                 break Some((idx, tk))
             } else {
+                count -= 1;
+            },
+            Err(UnexpectedToken(tk)) => if tk.is("(") {
                 count += 1;
             },
             Err(UnexpectedEOF) => break None,
-            Err(UnexpectedToken(_)) => (),
             _ => break None
         }
         idx += 1;
