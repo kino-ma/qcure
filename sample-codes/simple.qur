@@ -1,0 +1,87 @@
+{-
+ - This example shows implementation of simple round-robbin scheduler.
+ -}
+
+
+-- this is a comment
+{- this is
+a multiline
+comment -}
+
+-- `main` function will be used as a main routine. `schedule` is a prelude function that performs scheduling
+main := schedule
+    { init = init
+    , switch = switch
+    , entry = entry
+    }
+
+-- struct that holds informations about a process. this is prelude
+{-
+type Proc :=
+    { ..
+    }
+-}
+
+-- this type will be used to schedule
+type Queue a :=
+    { ps : List a
+    , count : usize
+    }
+
+-- functions defined in `impl` statement can be used like `foo.bar x y`
+impl Queue a {
+    -- initialize `Queue`
+    new : () -> Self
+    new :=
+        -- if you don't specify a field value, default value of that type will be used
+        Self
+            { ps = List a::new
+            , count = 0
+            }
+
+    -- pushes a given item to the queue(called `self`) and returns a new Queue
+    enque : Self -> a -> Self
+    self.enque x :=
+        -- right hand side expression will be the return value of that function
+        self
+            { ps = x :> ps
+            , count = count + 1
+            }
+
+    -- pops a last item of the queue and returns it and new Queue
+    deque : Self -> a, Self
+    self.deque x := {
+        p, ps' := self.ps.popLast
+        ( p
+        , self
+            { ps = ps'
+            , count = count - 1
+            }
+        )
+    }
+}
+
+-- initialize scheduler
+init : Queue
+init :=
+    Queue::new
+
+-- switches executing process to a new one, updating runque
+switch : Queue -> Proc -> Proc, Queue
+switch q proc := {
+    q' :=
+        -- exit status is empty, that means the process has not exited yet
+        if proc.code == Empty then
+            q.enque proc
+        else
+            q
+
+    q'.deque
+}
+
+-- pushes a new process entry
+entry : Proc -> Queue
+entry proc :=
+    runq.enque proc
+
+
