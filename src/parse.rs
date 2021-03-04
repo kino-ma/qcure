@@ -30,7 +30,25 @@ impl Program {
     }
 }
 
-fn expect<'a, T, I>(it: &mut I, kind: Option<TK>, s: Option<&str>) -> Result<&'a Token>
+fn expect<'a>(t: &'a Token, kind: Option<TK>, s: Option<&str>) -> Result<&'a Token> {
+    if let Some(kind) = kind {
+        if t.k != kind {
+            let t = t.clone().clone();
+            return Err(UnexpectedToken(t));
+        }
+    }
+    
+    if let Some(s) = s {
+        if !t.is(s) {
+            let t = t.clone().clone();
+            return Err(UnexpectedToken(t));
+        }
+    }
+
+    Ok(t)
+}
+
+fn expect_next<'a, T, I>(it: &mut I, kind: Option<TK>, s: Option<&str>) -> Result<&'a Token>
     where
         T: Debug + Borrow<&'a Token>,
         I: Iterator<Item = T> + Clone,
@@ -48,21 +66,7 @@ fn expect<'a, T, I>(it: &mut I, kind: Option<TK>, s: Option<&str>) -> Result<&'a
         })?
         .borrow() as &Token;
 
-    if let Some(kind) = kind {
-        if t.k != kind {
-            let t = t.clone().clone();
-            return Err(UnexpectedToken(t));
-        }
-    }
-    
-    if let Some(s) = s {
-        if !t.is(s) {
-            let t = t.clone().clone();
-            return Err(UnexpectedToken(t));
-        }
-    }
-
-    Ok(t)
+    expect(t, kind, s)
 }
 
 fn priority(tk: &Token) -> usize {
@@ -109,10 +113,10 @@ impl Statement {
         let expr;
 
         debug!("it: {:?}", it);
-        t = expect(&mut it, Some(TK::Identifier), None)?;
+        t = expect_next(&mut it, Some(TK::Identifier), None)?;
 
         prefix = if t.is("public") || t.is("exported") {
-            t = expect(&mut it, Some(TK::Identifier), None)?;
+            t = expect_next(&mut it, Some(TK::Identifier), None)?;
             None
         } else {
             None
@@ -121,7 +125,7 @@ impl Statement {
         ident = t.t.clone();
 
         debug!("it: {:?}", it);
-        expect(&mut it, Some(TK::Symbol), Some(":="))?;
+        expect_next(&mut it, Some(TK::Symbol), Some(":="))?;
 
         debug!("it: {:?}", it);
         expr = Expr_::new(&mut it.collect())?;
@@ -187,7 +191,7 @@ impl FuncApplicationOp_ {
 
     pub fn unary_op(v: &mut Vec<&Token>) -> Result<Self> {
         debug!("FuncApplicationOp_::unary_op({:?})", v);
-        match expect(&mut v.iter().map(|t| *t), Some(TK::Symbol), None) {
+        match expect_next(&mut v.iter().map(|t| *t), Some(TK::Symbol), None) {
             Ok(tk) => {
                 debug!("unary_op: symbol");
                 if v.is_empty() {
@@ -330,7 +334,7 @@ use Term_::*;
 impl Term_ {
     pub fn new(tokens: &mut Vec<&Token>) -> Result<Self> {
         debug!("Term_::new({:?})", tokens);
-        let tk = expect(&mut tokens.iter().map(|t| *t), None, None)?;
+        let tk = expect_next(&mut tokens.iter().map(|t| *t), None, None)?;
         match tk.k {
             TK::Numeric | TK::Identifier => Self::from(tokens.remove(0)),
             TK::Symbol => Self::expr(tokens),
@@ -360,7 +364,7 @@ impl Term_ {
     pub fn identifier(v: &mut Vec<&Token>) -> Result<Self> {
         debug!("Term_::identifier({:?})", v);
 
-        expect(&mut v.iter(), Some(TK::Identifier), None)
+        expect_next(&mut v.iter(), Some(TK::Identifier), None)
             .and_then(|tk| Self::from(tk))
     }
 
@@ -368,14 +372,14 @@ impl Term_ {
         debug!("Term_::expr({:?})", tokens);
 
         // opening bracket
-        expect(&mut tokens.iter(), Some(TK::Symbol), Some("("))?;
-        tokens.remove(0);
-
+        expect_next(&mut tokens.iter(), Some(TK::Symbol), Some("("))?;
         let (idx, _) = search_correspond_closing_brackets(tokens)
             .ok_or(ExpectedCloseBracket)?;
+
         let mut expr_tokens: Vec<&Token> = tokens.drain(..=idx).collect();
 
-        // closing bracket
+        // brackets
+        expr_tokens.remove(0);
         expr_tokens.pop();
 
         Ok(Expr(Box::new(Expr_::new(&mut expr_tokens)?)))
@@ -399,25 +403,26 @@ impl Term_ {
 }
 
 fn search_correspond_closing_brackets<'a>(v: &Vec<&'a Token>) -> Option<(usize, &'a Token)> {
-    let mut it = v.iter();
-    let mut idx = 0;
+    debug!("search bracket from {:?}", v);
     let mut count = 0;
 
-    loop {
-        match expect(&mut it, Some(TK::Symbol), Some(")")) {
+    for (i, t) in v.iter().enumerate() {
+        match expect(t, Some(TK::Symbol), Some(")")) {
             Ok(tk) => if count == 1 {
-                break Some((idx, tk))
+                debug!("searched: {:?} at {}", tk, i);
+                return Some((i, tk))
             } else {
                 count -= 1;
             },
             Err(UnexpectedToken(tk)) => if tk.is("(") {
                 count += 1;
             },
-            Err(UnexpectedEOF) => break None,
-            _ => break None
+            Err(UnexpectedEOF) => break,
+            _ => break,
         }
-        idx += 1;
     }
+
+    None
 }
 
 impl std::cmp::PartialOrd for Term_ {
