@@ -675,11 +675,11 @@ mod tests {
         let f_1_2 = Normal {
             op: Box::new(f_1),
             arg: Literal(NumericLiteral(2)),
-        }
+        };
         let f_1_2_3 = Normal {
             op: Box::new(f_1_2),
             arg: Literal(NumericLiteral(3)),
-        }
+        };
         let expocted = f_1_2_3;
 
         let actual = FuncApplication_::new(&mut v).expect("failed to parse");
@@ -785,8 +785,8 @@ mod tests {
             FuncApplicationOp_::BinaryOpL {
                 op: "+".to_string(),
                 arg1: Box::new(FuncApplicationOp_::FuncApplication(FuncApplication_::Normal{
-                        op: Box::new(Term_::Identifier("f".to_string())),
-                        args: vec![Term_::Literal(NumericLiteral(1))]
+                        op: Box::new(Term(Identifier("f".to_string()))),
+                        arg: Term_::Literal(NumericLiteral(1)),
                     })
                 ),
                 arg2: Box::new(FuncApplicationOp_::BinaryOpL {
