@@ -293,14 +293,24 @@ impl FuncApplication_ {
     pub fn new(v: &mut Vec<&Token>) -> Result<Self> {
         debug!("FuncApplication_::new({:?})", v);
 
-        let op = Term_::new(v)?;
+        let term = Term_::new(v)?;
+        let app_result = Term(term).applicate(v);
 
+        match app_result {
+            Err(CouldntApplicate(app)) => Ok(app),
+            Err(e) => Err(e),
+            ok => ok
+        }
+    }
+
+    fn applicate(self: Self, v: &mut Vec<&Token>) -> Result<Self> {
         match Term_::new(v) {
-            Ok(arg) => Ok(Normal {
-                op: Box::new(Term(op)),
+            Ok(arg) => Normal {
+                op: Box::new(self),
                 arg,
-            }),
-            Err(UnexpectedEOF) => Ok(Term(op)),
+            }
+                .applicate(v),
+            Err(UnexpectedEOF) => Err(CouldntApplicate(self)),
             e => Err(e.unwrap_err()),
         }
     }
@@ -510,6 +520,7 @@ pub enum ParseError {
     UnexpectedToken(Token),
     UnexpectedCloseBracket,
     ExpectedCloseBracket,
+    CouldntApplicate(FuncApplication_),
     UnexpectedEOF,
     InvalidNumeric,
     CouldntFindOperator,
@@ -524,6 +535,7 @@ impl std::fmt::Display for ParseError {
             UnexpectedToken(t) => write!(f, "unexpected token: `{:?}`", t),
             UnexpectedCloseBracket => write!(f, "unexpected closing bracket"),
             ExpectedCloseBracket => write!(f, "expected closing bracket"),
+            CouldntApplicate(op) => write!(f, "could not applicate function `{:?}`", op),
             UnexpectedEOF => write!(f, "unexpected EOF"),
             InvalidNumeric => write!(f, "invalid numeric literal"),
             CouldntFindOperator => write!(f, "couldn't find an operator"),
