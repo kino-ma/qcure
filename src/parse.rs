@@ -281,7 +281,7 @@ fn search_bin_op_l<'a>(v: &Vec<&'a Token>) -> Option<(usize, &'a Token)> {
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum FuncApplication_ {
     Term(Term_),
-    Normal { op: Box<Term_>, args: Vec<Term_> },
+    Normal { op: Box<FuncApplication_>, arg: Term_ },
 }
 use FuncApplication_::*;
 
@@ -293,23 +293,16 @@ impl FuncApplication_ {
     pub fn new(v: &mut Vec<&Token>) -> Result<Self> {
         debug!("FuncApplication_::new({:?})", v);
 
-        let first = Term_::new(v)?;
+        let op = Term_::new(v)?;
 
-        let mut args = Vec::new();
-
-        while let Ok(arg) = Term_::new(v) {
-            args.push(arg);
+        match Term_::new(v) {
+            Ok(arg) => Ok(Normal {
+                op: Box::new(Term(op)),
+                arg,
+            }),
+            Err(UnexpectedEOF) => Ok(Term(op)),
+            e => Err(e.unwrap_err()),
         }
-
-        return Ok(
-            match args.len() {
-                0 => Term(first),
-                _ => Normal {
-                    op: Box::new(first),
-                    args
-                }
-            }
-        )
     }
 }
 
@@ -647,8 +640,8 @@ mod tests {
         let mut v = create_vec(&code);
 
         let expect = Normal {
-            op: Box::new(Term_::Identifier("f".to_string())),
-            args: vec![Literal(NumericLiteral(1))],
+            op: Box::new(Term(Term_::Identifier("f".to_string()))),
+            arg: Literal(NumericLiteral(1)),
         };
 
         let actual = FuncApplication_::new(&mut v).expect("failed to parse");
@@ -675,10 +668,19 @@ mod tests {
         let code = setup(src);
         let mut v = create_vec(&code);
 
-        let expect = Normal {
-            op: Box::new(Term_::Identifier("f".to_string())),
-            args: vec![Literal(NumericLiteral(1)), Literal(NumericLiteral(2)), Literal(NumericLiteral(3))],
+        let f_1 = Normal {
+            op: Box::new(Term(Identifier("f".to_string()))),
+            arg: Literal(NumericLiteral(1))
         };
+        let f_1_2 = Normal {
+            op: Box::new(f_1),
+            arg: Literal(NumericLiteral(2)),
+        }
+        let f_1_2_3 = Normal {
+            op: Box::new(f_1_2),
+            arg: Literal(NumericLiteral(3)),
+        }
+        let expocted = f_1_2_3;
 
         let actual = FuncApplication_::new(&mut v).expect("failed to parse");
 
