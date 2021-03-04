@@ -1,17 +1,28 @@
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub struct Code {
-    tokens: Vec<Token>
+    pub tokens: Vec<Token>
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub struct Token {
-    t: String
+    pub t: String,
+    pub k: TokenKind,
 }
+
+#[derive(Debug, Eq, PartialEq, Clone)]
+pub enum TokenKind {
+    WhiteSpace,
+    Numeric,
+    Identifier,
+    Symbol,
+    Empty
+}
+use TokenKind::*;
 
 type ConsumeResult = std::result::Result<(Token, String), String>;
 type Result<T> = std::result::Result<T, TokenizeError>;
 
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub enum TokenizeError {}
 
 impl Code {
@@ -36,14 +47,20 @@ impl Code {
 
         Ok(res)
     }
+
+    pub fn iter(&self) -> TokenIter {
+        self.tokens.iter()
+    }
 }
 
+pub type TokenIter<'a> = std::slice::Iter<'a, Token>;
+
 impl Token {
-    pub fn new(t: String) -> Self {
+    pub fn new(t: String, k: TokenKind) -> Self {
         let t = t.to_string();
 
         Self {
-            t
+            t, k
         }
     }
 
@@ -56,13 +73,13 @@ impl Token {
             .unwrap_or(Self::empty())
     }
 
-    pub fn try_consume(code: String, last: usize) -> ConsumeResult {
+    pub fn try_consume(code: String, k: TokenKind, last: usize) -> ConsumeResult {
         if last == 0 {
             Err(code)
         } else {
             let s = code.chars().take(last).collect();
             let c = code.chars().skip(last).collect();
-            Ok((Self::new(s), c))
+            Ok((Self::new(s, k), c))
         }
     }
 
@@ -77,7 +94,7 @@ impl Token {
             idx += 1;
         }
 
-        Self::try_consume(code, idx)
+        Self::try_consume(code, WhiteSpace, idx)
     }
 
     pub fn numeric<'a>(code: String) -> ConsumeResult {
@@ -90,7 +107,7 @@ impl Token {
             idx += 1;
         }
 
-        Self::try_consume(code, idx)
+        Self::try_consume(code, Numeric, idx)
     }
 
     pub fn identifier<'a>(code: String) -> ConsumeResult {
@@ -108,7 +125,7 @@ impl Token {
             idx += 1;
         }
 
-        Self::try_consume(code, idx)
+        Self::try_consume(code, Identifier, idx)
     }
 
     pub fn symbol<'a>(code: String) -> ConsumeResult {
@@ -122,15 +139,19 @@ impl Token {
             idx += 1;
         }
 
-        Self::try_consume(code, idx)
+        Self::try_consume(code, Symbol, idx)
     }
 
     pub fn empty() -> (Self, String) {
-        (Self::new(String::new()), String::new())
+        (Self::new(String::new(), Empty), String::new())
     }
 
     pub fn len(&self) -> usize {
         return self.t.len();
+    }
+
+    pub fn is(&self, s: &str) -> bool {
+        self.t == s
     }
 
     pub fn is_empty(&self) -> bool {
@@ -145,6 +166,26 @@ impl std::fmt::Display for TokenizeError {
 
 }
 
+/*
+pub struct TokenIter<'a> {
+    it: std::slice::Iter<'a, Token>
+}
+
+impl<'a> TokenIter<'a> {
+    pub fn new(tokens: &'a Vec<Token>) -> Self {
+        let it = tokens.iter();
+        Self { it }
+    }
+}
+
+impl<'a> Iterator for TokenIter<'a> {
+    type Item = &'a Token;
+    fn next(&mut self) -> Option<Self::Item> {
+        self.it.next()
+    }
+}
+*/
+
 impl std::error::Error for TokenizeError {
 
 }
@@ -155,23 +196,23 @@ mod tests {
 
     #[test]
     fn new_token() {
-        let expect = Token { t: "hoge".to_string() };
-        let actual = Token::new("hoge".to_string());
+        let expect = Token { t: "hoge".to_string(), k: Identifier };
+        let actual = Token::new("hoge".to_string(), Identifier);
         println!("{:?}", actual);
         assert_eq!(expect, actual);
 
-        let expect = Token { t: "aaa 123"[0..=2].to_string() };
-        let actual = Token::new("aaa".to_string());
+        let expect = Token { t: "aaa 123"[0..=2].to_string(), k: Identifier };
+        let actual = Token::new("aaa".to_string(), Identifier);
         assert_eq!(expect, actual);
 
-        let expect = Token { t: "123".to_string() };
-        let actual = Token::new("123".to_string());
+        let expect = Token { t: "123".to_string(), k: Numeric };
+        let actual = Token::new("123".to_string(), Numeric);
         assert_eq!(expect, actual);
     }
 
     #[test]
     fn tokenize_whitespace() {
-        let expect = Token::new("  \t".to_string());
+        let expect = Token::new("  \t".to_string(), WhiteSpace);
         let actual = Token::whitespace("  \thoge".to_string()).unwrap().0;
         assert_eq!(expect, actual);
 
@@ -182,7 +223,7 @@ mod tests {
 
     #[test]
     fn tokenize_numeric() {
-        let expect = Token::new("123".to_string());
+        let expect = Token::new("123".to_string(), Numeric);
         let actual = Token::numeric("123 hoge".to_string()).unwrap().0;
         assert_eq!(expect, actual);
 
@@ -193,11 +234,11 @@ mod tests {
 
     #[test]
     fn tokenize_identifier() {
-        let expect = Token::new("hoge123".to_string());
+        let expect = Token::new("hoge123".to_string(), Identifier);
         let actual = Token::identifier("hoge123 hoge".to_string()).unwrap().0;
         assert_eq!(expect, actual);
 
-        let expect = Token::new("Hoge".to_string());
+        let expect = Token::new("Hoge".to_string(), Identifier);
         let actual = Token::identifier("Hoge".to_string()).unwrap().0;
         assert_eq!(expect, actual);
 
@@ -208,7 +249,7 @@ mod tests {
 
     #[test]
     fn tokenize_symbol() {
-        let expect = Token::new(":=".to_string());
+        let expect = Token::new(":=".to_string(), Symbol);
         let actual = Token::symbol(":= hoge".to_string()).unwrap().0;
         assert_eq!(expect, actual);
 
@@ -222,12 +263,29 @@ mod tests {
         let code = r#"hoge fuga
         123piyo  a"#;
 
-        let arr = ["hoge", " ", "fuga", "\n        ", "123", "piyo", "  ", "a"];
-        let tokens = arr.iter().map(|s| Token::new(s.to_string())).collect();
+        let arr = [("hoge", Identifier), (" ", WhiteSpace), ("fuga", Identifier), ("\n        ", WhiteSpace), ("123", Numeric), ("piyo", Identifier), ("  ", WhiteSpace), ("a", Identifier)];
+        let tokens = arr.iter().map(|(s, k)| Token::new(s.to_string(), k.clone())).collect();
         let expect = Code { tokens };
 
         let actual = Code::from(code).unwrap();
         
+        assert_eq!(expect, actual);
+    }
+
+    #[test]
+    fn iter_tokens() {
+        let _code = r#"hoge fuga
+        123piyo  a"#;
+
+        let arr = [("hoge", Identifier), (" ", WhiteSpace), ("fuga", Identifier), ("\n        ", WhiteSpace), ("123", Numeric), ("piyo", Identifier), ("  ", WhiteSpace), ("a", Identifier)];
+        let tokens: Vec<Token> = arr.iter().map(|(s, k)| Token::new(s.to_string(), k.clone())).collect();
+
+        let expect = tokens.clone();
+
+        let code = Code { tokens };
+        let iter = code.iter();
+        let actual: Vec<Token> = iter.map(|t| t.clone()).collect();
+
         assert_eq!(expect, actual);
     }
 }
