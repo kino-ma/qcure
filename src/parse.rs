@@ -680,7 +680,7 @@ mod tests {
             op: Box::new(f_1_2),
             arg: Literal(NumericLiteral(3)),
         };
-        let expocted = f_1_2_3;
+        let expect = f_1_2_3;
 
         let actual = FuncApplication_::new(&mut v).expect("failed to parse");
 
